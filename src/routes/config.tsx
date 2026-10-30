@@ -29,7 +29,7 @@ function Config() {
 
   const add = async () => {
     const { error } = await supabase.from("services").insert({ business_id: business.id, name: n.name, duration_minutes: Number(n.duration), price: Number(n.price), deposit_value: Number(n.deposit) });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setN({ name: "", duration: "60", price: "", deposit: "30" }); load();
   };
   const upd = async (id: string, patch: Partial<Service>) => { await supabase.from("services").update(patch).eq("id", id); load(); };
@@ -42,7 +42,7 @@ function Config() {
   };
 
   const connectWa = async () => {
-    if (!biz.evoUrl || !biz.evoKey || !biz.evoInst) return toast.error("Preencha URL, chave e instância da Evolution API");
+    if (!biz.evoUrl || !biz.evoKey || !biz.evoInst) { toast.error("Preencha URL, chave e instância da Evolution API"); return; }
     try {
       const r = await fetch(`${biz.evoUrl.replace(/\/$/, "")}/instance/connect/${biz.evoInst}`, { headers: { apikey: biz.evoKey } });
       const j = await r.json();
