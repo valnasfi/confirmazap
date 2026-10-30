@@ -1,10 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 
-const url = import.meta.env.VITE_SUPABASE_URL || "https://placeholder.supabase.co";
-const anon = import.meta.env.VITE_SUPABASE_ANON_KEY || "placeholder";
+const url = import.meta.env['VITE_SUPABASE_URL'] || "https://placeholder.supabase.co";
+const anon = import.meta.env['VITE_SUPABASE_ANON_KEY'] || "placeholder";
 
 export const supabaseConfigured = Boolean(
-  import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY,
+  import.meta.env['VITE_SUPABASE_URL'] && import.meta.env['VITE_SUPABASE_ANON_KEY'],
 );
 
 export const supabase = createClient(url, anon, {

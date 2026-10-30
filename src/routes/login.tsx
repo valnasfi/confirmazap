@@ -25,8 +25,8 @@ function Login() {
       ? await supabase.auth.signInWithPassword({ email, password })
       : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + "/dashboard" } });
     setBusy(false);
-    if (res.error) return toast.error(res.error.message);
-    if (mode === "up" && !res.data.session) return toast.success("Confira seu e-mail para confirmar a conta.");
+    if (res.error) { toast.error(res.error.message); return; }
+    if (mode === "up" && !res.data.session) { toast.success("Confira seu e-mail para confirmar a conta."); return; }
     nav({ to: "/dashboard" });
   };
 
