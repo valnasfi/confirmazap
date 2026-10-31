@@ -9,13 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { BrandImages } from "@/components/BrandImages";
+import { WhatsAppConnect } from "@/components/WhatsAppConnect";
 
 export const Route = createFileRoute("/config")({
   head: () => ({ meta: [{ title: "Configurações — ConfirmaZap" }, { name: "description", content: "Serviços, regras e integrações." }, { property: "og:title", content: "Configurações — ConfirmaZap" }, { property: "og:description", content: "Serviços, regras e integrações." }] }),
   component: () => <AppShell><Config /></AppShell>,
 });
 
-type Settings = { cancel_hours?: number; evolution_url?: string; evolution_key?: string; evolution_instance?: string };
+type Settings = { cancel_hours?: number };
 
 function Config() {
   const { business, reload } = useBiz();
@@ -24,8 +25,7 @@ function Config() {
   const [editId, setEditId] = useState<string | null>(null);
   const [ed, setEd] = useState({ name: "", duration: "", price: "", deposit: "" });
   const s0 = (business.settings ?? {}) as Settings;
-  const [biz, setBiz] = useState({ name: business.name, whatsapp: business.whatsapp ?? "", asaas: business.asaas_api_key ?? "", cancel: String(s0.cancel_hours ?? 4), evoUrl: s0.evolution_url ?? "", evoKey: s0.evolution_key ?? "", evoInst: s0.evolution_instance ?? "" });
-  const [qr, setQr] = useState<string | null>(null);
+  const [biz, setBiz] = useState({ name: business.name, whatsapp: business.whatsapp ?? "", asaas: business.asaas_api_key ?? "", cancel: String(s0.cancel_hours ?? 4) });
 
   const load = () => supabase.from("services").select("*").eq("business_id", business.id).order("name").then(({ data }) => setServices((data as Service[]) ?? []));
   useEffect(() => { load(); }, [business.id]);
@@ -59,20 +59,9 @@ function Config() {
   };
 
   const saveBiz = async () => {
-    const settings = { ...s0, cancel_hours: Number(biz.cancel), evolution_url: biz.evoUrl, evolution_key: biz.evoKey, evolution_instance: biz.evoInst };
+    const settings = { ...s0, cancel_hours: Number(biz.cancel) };
     const { error } = await supabase.from("businesses").update({ name: biz.name, whatsapp: biz.whatsapp, asaas_api_key: biz.asaas || null, settings }).eq("id", business.id);
     if (error) toast.error(error.message); else { toast.success("Salvo"); reload(); }
-  };
-
-  const connectWa = async () => {
-    if (!biz.evoUrl || !biz.evoKey || !biz.evoInst) { toast.error("Preencha URL, chave e instância da Evolution API"); return; }
-    try {
-      const r = await fetch(`${biz.evoUrl.replace(/\/$/, "")}/instance/connect/${biz.evoInst}`, { headers: { apikey: biz.evoKey } });
-      const j = await r.json();
-      const code = j.base64 ?? j.qrcode?.base64;
-      if (code) setQr(code.startsWith("data:") ? code : `data:image/png;base64,${code}`);
-      else toast.message(j.instance?.state === "open" ? "WhatsApp já conectado" : "Sem QR Code retornado");
-    } catch { toast.error("Não foi possível falar com a Evolution API"); }
   };
 
   const card = "rounded-2xl bg-card p-6 shadow-card";
@@ -124,14 +113,7 @@ function Config() {
         <label className="text-sm">Chave de API do Asaas<Input type="password" value={biz.asaas} onChange={(e) => setBiz({ ...biz, asaas: e.target.value })} /></label>
       </section>
 
-      <section className={`${card} grid gap-3 sm:grid-cols-3`}>
-        <h2 className="text-lg font-semibold sm:col-span-3">WhatsApp (Evolution API)</h2>
-        <Input placeholder="URL da Evolution API" value={biz.evoUrl} onChange={(e) => setBiz({ ...biz, evoUrl: e.target.value })} />
-        <Input placeholder="API key" type="password" value={biz.evoKey} onChange={(e) => setBiz({ ...biz, evoKey: e.target.value })} />
-        <Input placeholder="Instância" value={biz.evoInst} onChange={(e) => setBiz({ ...biz, evoInst: e.target.value })} />
-        <div className="sm:col-span-3"><Button variant="secondary" onClick={connectWa}>Mostrar QR Code</Button></div>
-        {qr && <img src={qr} alt="QR Code WhatsApp" className="h-56 w-56" />}
-      </section>
+      <WhatsAppConnect />
 
       <Button size="lg" onClick={saveBiz}>Salvar configurações</Button>
     </div>
