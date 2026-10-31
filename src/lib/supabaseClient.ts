@@ -20,6 +20,7 @@ export type Business = {
   slug: string;
   whatsapp: string | null;
   logo_url: string | null;
+  banner_url?: string | null;
   asaas_api_key?: string | null;
   settings?: Record<string, unknown>;
   status?: "active" | "suspended";

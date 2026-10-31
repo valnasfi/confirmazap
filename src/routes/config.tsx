@@ -8,6 +8,7 @@ import { brl } from "@/lib/booking";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { BrandImages } from "@/components/BrandImages";
 
 export const Route = createFileRoute("/config")({
   head: () => ({ meta: [{ title: "Configurações — ConfirmaZap" }, { name: "description", content: "Serviços, regras e integrações." }, { property: "og:title", content: "Configurações — ConfirmaZap" }, { property: "og:description", content: "Serviços, regras e integrações." }] }),
@@ -112,6 +113,8 @@ function Config() {
         </div>
         <Button className="mt-3" disabled={!n.name || !n.price} onClick={add}>Adicionar serviço</Button>
       </section>
+
+      <BrandImages />
 
       <section className={`${card} grid gap-3 sm:grid-cols-2`}>
         <h2 className="text-lg font-semibold sm:col-span-2">Negócio e regras</h2>

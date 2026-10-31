@@ -34,7 +34,9 @@ function Booking() {
 
   useEffect(() => {
     (async () => {
-      const { data: b } = await supabase.from("businesses").select("id,name,slug,whatsapp,logo_url").eq("slug", slug).maybeSingle();
+      // banner_url só existe depois do SQL das imagens; sem ele, cai na consulta antiga em vez de quebrar a página.
+      let { data: b, error } = await supabase.from("businesses").select("id,name,slug,whatsapp,logo_url,banner_url").eq("slug", slug).maybeSingle();
+      if (error) ({ data: b } = await supabase.from("businesses").select("id,name,slug,whatsapp,logo_url").eq("slug", slug).maybeSingle());
       setBiz(b as Business | null);
       if (b) {
         const { data: s } = await supabase.from("services").select("*").eq("business_id", b.id).eq("active", true).order("name");
@@ -93,8 +95,17 @@ function Booking() {
 
   return (
     <div className="min-h-screen">
-      <header className="bg-hero px-6 pb-16 pt-6 text-ink-foreground">
-        <div className="mx-auto max-w-2xl"><Logo light /><h1 className="mt-10 text-3xl font-bold">{biz.name}</h1><p className="opacity-75">Agende seu horário</p></div>
+      <header
+        className="bg-hero px-6 pb-16 pt-6 text-ink-foreground"
+        style={biz.banner_url ? { backgroundImage: `linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.6)), url(${JSON.stringify(biz.banner_url)})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+      >
+        <div className="mx-auto max-w-2xl">
+          <Logo light />
+          <div className="mt-10 flex items-center gap-4">
+            {biz.logo_url && <img src={biz.logo_url} alt={`Logo de ${biz.name}`} className="h-16 w-16 shrink-0 rounded-2xl bg-white object-cover shadow-card" />}
+            <div><h1 className="text-3xl font-bold">{biz.name}</h1><p className="opacity-75">Agende seu horário</p></div>
+          </div>
+        </div>
       </header>
       <main className="mx-auto -mt-10 max-w-2xl space-y-4 px-4 pb-16">
         {result ? (
