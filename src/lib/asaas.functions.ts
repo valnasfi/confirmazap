@@ -34,7 +34,11 @@ export const getBusySlots = createServerFn({ method: "POST" })
       .neq("status", "canceled")
       .gte("start_at", data.from)
       .lt("start_at", data.to);
-    return (rows ?? []).map((r) => r.start_at as string);
+    // Se a coluna vier sem fuso (timestamp), os horários estão em UTC: marca com "Z".
+    return (rows ?? []).map((r) => {
+      const s = String(r.start_at);
+      return /(Z|[+-]\d{2}(:?\d{2})?)$/i.test(s) ? s : s.replace(" ", "T") + "Z";
+    });
   });
 
 // create-auth: cria cliente + agendamento pendente + autorização Pix Automático
