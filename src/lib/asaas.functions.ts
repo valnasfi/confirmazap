@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSupabaseAdmin } from "./supabaseAdmin";
+import { HOLD_MINUTES, activeHoldFilter } from "./booking";
 
 function asaasBase() {
   return process.env["ASAAS_ENV"] === "production"
@@ -8,11 +9,12 @@ function asaasBase() {
     : "https://api-sandbox.asaas.com/v3";
 }
 
-async function asaas(apiKey: string, path: string, body: unknown) {
+// Sem corpo = GET; com corpo = POST.
+async function asaas(apiKey: string, path: string, body?: unknown) {
   const res = await fetch(asaasBase() + path, {
-    method: "POST",
+    method: body === undefined ? "GET" : "POST",
     headers: { "Content-Type": "application/json", access_token: apiKey, "User-Agent": "ConfirmaZap" },
-    body: JSON.stringify(body),
+    body: body === undefined ? undefined : JSON.stringify(body),
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -22,7 +24,13 @@ async function asaas(apiKey: string, path: string, body: unknown) {
   return json;
 }
 
-// Horários ocupados (público, só devolve horários)
+// O banco guarda os horários sem fuso (UTC): marca com "Z" para o navegador não ler como horário local.
+function asUtc(value: unknown) {
+  const s = String(value);
+  return /(Z|[+-]\d{2}(:?\d{2})?)$/i.test(s) ? s : s.replace(" ", "T") + "Z";
+}
+
+// Horários ocupados (público, só devolve horários). Reserva não paga fora do prazo não ocupa o horário.
 export const getBusySlots = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ businessId: z.string().uuid(), from: z.string(), to: z.string() }).parse(i))
   .handler(async ({ data }) => {
@@ -32,17 +40,23 @@ export const getBusySlots = createServerFn({ method: "POST" })
       .select("start_at")
       .eq("business_id", data.businessId)
       .neq("status", "canceled")
+      .or(activeHoldFilter())
       .gte("start_at", data.from)
       .lt("start_at", data.to);
-    // Se a coluna vier sem fuso (timestamp), os horários estão em UTC: marca com "Z".
-    return (rows ?? []).map((r) => {
-      const s = String(r.start_at);
-      return /(Z|[+-]\d{2}(:?\d{2})?)$/i.test(s) ? s : s.replace(" ", "T") + "Z";
-    });
+    return (rows ?? []).map((r) => asUtc(r.start_at));
   });
 
-// create-auth: cria cliente + agendamento pendente + autorização Pix Automático
-export const createBookingAuth = createServerFn({ method: "POST" })
+type BookingResult = {
+  appointmentId: string;
+  status: "pending" | "confirmed";
+  value: number;
+  qrCode: string | null;
+  pixCopyAndPaste: string | null;
+};
+
+// Cria cliente + agendamento pendente + cobrança Pix do sinal. O horário só é confirmado
+// quando o pagamento chega pelo webhook (src/routes/api.asaas-webhook.ts).
+export const createBooking = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
       businessId: z.string().uuid(),
@@ -54,16 +68,24 @@ export const createBookingAuth = createServerFn({ method: "POST" })
       consent: z.literal(true),
     }).parse(i),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<BookingResult> => {
     const admin = getSupabaseAdmin();
     const { data: biz } = await admin.from("businesses").select("id,name,asaas_api_key,status").eq("id", data.businessId).single();
     const { data: svc } = await admin.from("services").select("*").eq("id", data.serviceId).eq("business_id", data.businessId).eq("active", true).single();
     if (!biz || !svc) throw new Error("Serviço não encontrado");
     if (biz.status === "suspended") throw new Error("Este negócio está temporariamente indisponível.");
 
+    const value = Number(svc.deposit_value ?? 0);
+    const apiKey: string | undefined = biz.asaas_api_key || process.env["ASAAS_API_KEY"];
+    if (value > 0 && !apiKey) throw new Error("Este negócio ainda não ativou o recebimento por Pix. Fale com o estabelecimento.");
+
     const start = new Date(data.startAt);
+    if (Number.isNaN(start.getTime()) || start.getTime() < Date.now()) throw new Error("Horário inválido. Escolha outro.");
     const end = new Date(start.getTime() + svc.duration_minutes * 60000);
-    const { data: clash } = await admin.from("appointments").select("id").eq("business_id", biz.id).neq("status", "canceled").eq("start_at", start.toISOString()).limit(1);
+    const { data: clash } = await admin
+      .from("appointments").select("id")
+      .eq("business_id", biz.id).eq("start_at", start.toISOString())
+      .neq("status", "canceled").or(activeHoldFilter()).limit(1);
     if (clash && clash.length) throw new Error("Horário acabou de ser reservado. Escolha outro.");
 
     const phone = data.whatsapp.replace(/\D/g, "");
@@ -77,38 +99,66 @@ export const createBookingAuth = createServerFn({ method: "POST" })
       .from("appointments")
       .insert({ business_id: biz.id, customer_id: customer.id, service_id: svc.id, start_at: start.toISOString(), end_at: end.toISOString(), status: "pending" })
       .select().single();
-    if (aErr) throw new Error(aErr.message);
-
-    const apiKey = biz.asaas_api_key || process.env["ASAAS_API_KEY"];
-    if (!apiKey) {
-      return { appointmentId: appt.id, qrCode: null, pixCopyAndPaste: null, warning: "Asaas não configurado para este negócio." };
+    if (aErr) {
+      await admin.from("customers").delete().eq("id", customer.id);
+      throw new Error(aErr.message);
     }
+
+    // Serviço sem sinal: não há o que cobrar, o horário já fica confirmado.
+    if (value <= 0) {
+      const { error } = await admin.from("appointments").update({ status: "confirmed" }).eq("id", appt.id);
+      if (error) throw new Error(error.message);
+      return { appointmentId: appt.id, status: "confirmed", value: 0, qrCode: null, pixCopyAndPaste: null };
+    }
+
+    const key = apiKey as string; // garantido pela checagem acima (value > 0)
     try {
-      const ac = await asaas(apiKey, "/customers", { name: data.name, cpfCnpj: customer.cpf, mobilePhone: phone });
-      const auth = await asaas(apiKey, "/pix/automatic/authorizations", {
-        customerId: ac.id,
-        frequency: "MONTHLY",
-        contractId: appt.id,
-        startDate: new Date().toISOString().slice(0, 10),
-        value: Number(svc.deposit_value),
-        paymentCreationMode: "MANUAL",
-        description: `Garantia de comparecimento - ${biz.name}`,
-        immediateQrCode: { value: 0.01, expirationSeconds: 3600 },
+      const ac = await asaas(key, "/customers", { name: data.name, cpfCnpj: customer.cpf, mobilePhone: phone });
+      const dueDate = new Date(Date.now() - 3 * 3600_000).toISOString().slice(0, 10); // data em Brasília
+      const pay = await asaas(key, "/payments", {
+        customer: ac.id,
+        billingType: "PIX",
+        value,
+        dueDate,
+        description: `Sinal de agendamento - ${biz.name}`,
+        externalReference: appt.id,
       });
-      await admin.from("customers").update({ asaas_customer_id: ac.id, pix_auth_id: auth.id }).eq("id", customer.id);
-      const qr = auth.immediateQrCode ?? auth.qrCode ?? auth;
+      // Guarda o ID do pagamento logo: é por ele que o webhook acha o agendamento.
+      const { error: uErr } = await admin.from("appointments").update({ asaas_payment_id: pay.id }).eq("id", appt.id);
+      if (uErr) throw new Error(uErr.message);
+      const qr = await asaas(key, `/payments/${pay.id}/pixQrCode`);
+      await admin.from("customers").update({ asaas_customer_id: ac.id }).eq("id", customer.id);
+      const { error: pErr } = await admin.from("payments").insert({
+        business_id: biz.id, appointment_id: appt.id, customer_id: customer.id, asaas_payment_id: pay.id, value, status: "pending",
+      });
+      if (pErr) throw new Error(pErr.message);
       return {
         appointmentId: appt.id,
+        status: "pending",
+        value,
         qrCode: (qr.encodedImage as string) ?? null,
-        pixCopyAndPaste: (qr.payload ?? qr.pixCopyAndPaste ?? null) as string | null,
-        warning: null as string | null,
+        pixCopyAndPaste: (qr.payload as string) ?? null,
       };
     } catch (e) {
-      return { appointmentId: appt.id, qrCode: null, pixCopyAndPaste: null, warning: (e as Error).message };
+      // Falhou antes de o cliente ver o Pix: libera o horário e não deixa cadastro solto.
+      await admin.from("appointments").delete().eq("id", appt.id);
+      await admin.from("customers").delete().eq("id", customer.id);
+      throw new Error(`Não foi possível gerar o Pix: ${(e as Error).message}`);
     }
   });
 
-// charge-no-show: marca falta e cobra via autorização Pix
+// Status do agendamento para a tela do cliente (consulta a cada poucos segundos).
+export const getBookingStatus = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ appointmentId: z.string().uuid() }).parse(i))
+  .handler(async ({ data }) => {
+    const admin = getSupabaseAdmin();
+    const { data: a } = await admin.from("appointments").select("status,deposit_paid,created_at").eq("id", data.appointmentId).maybeSingle();
+    if (!a) throw new Error("Agendamento não encontrado");
+    const expired = a.status === "pending" && new Date(asUtc(a.created_at)).getTime() < Date.now() - HOLD_MINUTES * 60_000;
+    return { status: a.status as string, paid: a.deposit_paid === true, expired };
+  });
+
+// Marca falta. Se o sinal já foi pago na reserva, não há nova cobrança.
 export const chargeNoShow = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ appointmentId: z.string().uuid(), accessToken: z.string() }).parse(i))
   .handler(async ({ data }) => {
@@ -122,10 +172,14 @@ export const chargeNoShow = createServerFn({ method: "POST" })
     if (!appt || appt.businesses?.owner_id !== u.user.id) throw new Error("Sem permissão");
 
     await admin.from("appointments").update({ status: "no_show" }).eq("id", appt.id);
+    const c = appt.customers;
+    if (appt.deposit_paid) return { ok: true, message: "Falta marcada. O sinal já estava pago." };
+    // Reserva do fluxo novo que não chegou a pagar o sinal: não existe autorização Pix para cobrar.
+    if (!c?.pix_auth_id) return { ok: true, message: "Falta marcada. O sinal desta reserva não foi pago, então não há o que cobrar." };
+
     const value = Number(appt.services?.deposit_value ?? 30);
     const apiKey = appt.businesses?.asaas_api_key || process.env["ASAAS_API_KEY"];
-    const c = appt.customers;
-    if (!apiKey || !c?.pix_auth_id || !c?.asaas_customer_id) {
+    if (!apiKey || !c?.asaas_customer_id) {
       await admin.from("payments").insert({ business_id: appt.business_id, appointment_id: appt.id, customer_id: c?.id, value, status: "failed" });
       return { ok: false, message: "Falta marcada, mas o cliente não tem autorização Pix ativa." };
     }

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AgendaRouteImport } from './routes/agenda'
+import { Route as ApiAsaasWebhookRouteImport } from './routes/api.asaas-webhook'
 import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as CobrancasRouteImport } from './routes/cobrancas'
 import { Route as ConfigRouteImport } from './routes/config'
@@ -32,6 +33,11 @@ const AdminRoute = AdminRouteImport.update({
 const AgendaRoute = AgendaRouteImport.update({
   id: '/agenda',
   path: '/agenda',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAsaasWebhookRoute = ApiAsaasWebhookRouteImport.update({
+  id: '/api/asaas-webhook',
+  path: '/api/asaas-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientesRoute = ClientesRouteImport.update({
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/agenda': typeof AgendaRoute
+  '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
   '/clientes': typeof ClientesRoute
   '/cobrancas': typeof CobrancasRoute
   '/config': typeof ConfigRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/agenda': typeof AgendaRoute
+  '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
   '/clientes': typeof ClientesRoute
   '/cobrancas': typeof CobrancasRoute
   '/config': typeof ConfigRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/agenda': typeof AgendaRoute
+  '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
   '/clientes': typeof ClientesRoute
   '/cobrancas': typeof CobrancasRoute
   '/config': typeof ConfigRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/agenda'
+    | '/api/asaas-webhook'
     | '/clientes'
     | '/cobrancas'
     | '/config'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/agenda'
+    | '/api/asaas-webhook'
     | '/clientes'
     | '/cobrancas'
     | '/config'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/agenda'
+    | '/api/asaas-webhook'
     | '/clientes'
     | '/cobrancas'
     | '/config'
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AgendaRoute: typeof AgendaRoute
+  ApiAsaasWebhookRoute: typeof ApiAsaasWebhookRoute
   ClientesRoute: typeof ClientesRoute
   CobrancasRoute: typeof CobrancasRoute
   ConfigRoute: typeof ConfigRoute
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       path: '/agenda'
       fullPath: '/agenda'
       preLoaderRoute: typeof AgendaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/asaas-webhook': {
+      id: '/api/asaas-webhook'
+      path: '/api/asaas-webhook'
+      fullPath: '/api/asaas-webhook'
+      preLoaderRoute: typeof ApiAsaasWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clientes': {
@@ -219,6 +239,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AgendaRoute: AgendaRoute,
+  ApiAsaasWebhookRoute: ApiAsaasWebhookRoute,
   ClientesRoute: ClientesRoute,
   CobrancasRoute: CobrancasRoute,
   ConfigRoute: ConfigRoute,

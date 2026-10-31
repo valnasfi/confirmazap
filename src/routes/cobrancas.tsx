@@ -10,7 +10,7 @@ export const Route = createFileRoute("/cobrancas")({
 });
 
 type P = { id: string; created_at: string; value: number; status: string; asaas_payment_id: string | null; customers: { name: string } | null };
-const label: Record<string, string> = { pending: "Aguardando", paid: "Pago", failed: "Falhou", canceled: "Cancelado" };
+const label: Record<string, string> = { pending: "Aguardando", paid: "Pago", failed: "Falhou", canceled: "Cancelado", refund_needed: "Devolver sinal" };
 
 function Cobrancas() {
   const { business } = useBiz();
@@ -26,7 +26,7 @@ function Cobrancas() {
             {rows.length === 0 && <tr><td className="p-4 text-muted-foreground" colSpan={5}>Nenhuma cobrança ainda.</td></tr>}
             {rows.map((r) => (
               <tr key={r.id}><td className="p-4">{new Date(r.created_at).toLocaleDateString("pt-BR")}</td><td>{r.customers?.name}</td><td className="font-semibold">{brl(r.value)}</td>
-                <td><span className={`rounded-full px-2 py-1 text-xs ${r.status === "paid" ? "bg-st-confirmed/20" : r.status === "failed" ? "bg-st-noshow/20" : "bg-st-pending/20"}`}>{label[r.status] ?? r.status}</span></td>
+                <td><span className={`rounded-full px-2 py-1 text-xs ${r.status === "paid" ? "bg-st-confirmed/20" : r.status === "failed" || r.status === "refund_needed" ? "bg-st-noshow/20" : "bg-st-pending/20"}`}>{label[r.status] ?? r.status}</span></td>
                 <td className="font-mono text-xs text-muted-foreground">{r.asaas_payment_id ?? "—"}</td></tr>
             ))}
           </tbody>

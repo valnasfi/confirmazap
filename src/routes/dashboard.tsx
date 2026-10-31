@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell, useBiz, statusMeta } from "@/components/AppShell";
 import { supabase } from "@/lib/supabaseClient";
-import { brl } from "@/lib/booking";
+import { brl, activeHoldFilter } from "@/lib/booking";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Painel — ConfirmaZap" }, { name: "description", content: "Resumo do dia e das faltas." }, { property: "og:title", content: "Painel — ConfirmaZap" }, { property: "og:description", content: "Resumo do dia e das faltas." }] }),
@@ -23,8 +23,8 @@ function Dashboard() {
       const m = new Date(s.getFullYear(), s.getMonth(), 1);
       const sel = "id,start_at,status,deposit_paid,customers(name,whatsapp),services(name,deposit_value)";
       const [{ data: today }, { count: pending }, { count: noShow }, { data: paid }] = await Promise.all([
-        supabase.from("appointments").select(sel).eq("business_id", business.id).gte("start_at", s.toISOString()).lt("start_at", e.toISOString()).order("start_at"),
-        supabase.from("appointments").select("id", { count: "exact", head: true }).eq("business_id", business.id).eq("status", "pending"),
+        supabase.from("appointments").select(sel).eq("business_id", business.id).gte("start_at", s.toISOString()).lt("start_at", e.toISOString()).or(activeHoldFilter()).order("start_at"),
+        supabase.from("appointments").select("id", { count: "exact", head: true }).eq("business_id", business.id).eq("status", "pending").or(activeHoldFilter()),
         supabase.from("appointments").select("id", { count: "exact", head: true }).eq("business_id", business.id).eq("status", "no_show").gte("start_at", m.toISOString()),
         supabase.from("appointments").select("services(deposit_value)").eq("business_id", business.id).eq("deposit_paid", true),
       ]);

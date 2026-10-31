@@ -2,6 +2,12 @@
 export const OPEN_HOUR = 8;
 export const CLOSE_HOUR = 19;
 
+// Tempo que o horário fica guardado esperando o pagamento do sinal.
+export const HOLD_MINUTES = 30;
+export const holdCutoff = () => new Date(Date.now() - HOLD_MINUTES * 60_000).toISOString();
+// Filtro PostgREST (.or): reserva válida = já paga/confirmada ou ainda dentro do prazo de pagamento.
+export const activeHoldFilter = () => `status.neq.pending,created_at.gte.${holdCutoff()}`;
+
 export function isOpenDay(d: Date) {
   return d.getDay() !== 0; // domingo fechado
 }

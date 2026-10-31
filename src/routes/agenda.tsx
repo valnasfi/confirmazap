@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { AppShell, useBiz, statusMeta } from "@/components/AppShell";
 import { supabase } from "@/lib/supabaseClient";
 import { chargeNoShow } from "@/lib/asaas.functions";
+import { activeHoldFilter } from "@/lib/booking";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
@@ -23,7 +24,7 @@ function Agenda() {
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
-    const { data } = await supabase.from("appointments").select("id,start_at,end_at,status,customers(name,whatsapp),services(name,deposit_value)").eq("business_id", business.id);
+    const { data } = await supabase.from("appointments").select("id,start_at,end_at,status,customers(name,whatsapp),services(name,deposit_value)").eq("business_id", business.id).or(activeHoldFilter());
     setItems((data as unknown as Appt[]) ?? []);
   };
   useEffect(() => { load(); }, [business.id]);
