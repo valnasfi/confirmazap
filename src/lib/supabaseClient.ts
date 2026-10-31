@@ -22,6 +22,8 @@ export type Business = {
   logo_url: string | null;
   asaas_api_key?: string | null;
   settings?: Record<string, unknown>;
+  status?: "active" | "suspended";
+  suspended_reason?: string | null;
 };
 export type Service = {
   id: string;

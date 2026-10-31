@@ -52,9 +52,10 @@ export const createBookingAuth = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const admin = getSupabaseAdmin();
-    const { data: biz } = await admin.from("businesses").select("id,name,asaas_api_key").eq("id", data.businessId).single();
+    const { data: biz } = await admin.from("businesses").select("id,name,asaas_api_key,status").eq("id", data.businessId).single();
     const { data: svc } = await admin.from("services").select("*").eq("id", data.serviceId).eq("business_id", data.businessId).eq("active", true).single();
     if (!biz || !svc) throw new Error("Serviço não encontrado");
+    if (biz.status === "suspended") throw new Error("Este negócio está temporariamente indisponível.");
 
     const start = new Date(data.startAt);
     const end = new Date(start.getTime() + svc.duration_minutes * 60000);

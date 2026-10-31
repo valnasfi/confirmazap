@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { Session } from "@supabase/supabase-js";
-import { CalendarDays, LayoutDashboard, LogOut, Receipt, Settings, Users, MessageCircleHeart } from "lucide-react";
+import { CalendarDays, LayoutDashboard, LogOut, Receipt, Settings, ShieldCheck, Users, MessageCircleHeart } from "lucide-react";
 import { supabase, supabaseConfigured, type Business } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 
@@ -35,10 +35,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [business, setBusiness] = useState<Business | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "nobiz">("loading");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const load = async (s: Session) => {
     const { data } = await supabase.from("businesses").select("*").eq("owner_id", s.user.id).maybeSingle();
     if (data) { setBusiness(data as Business); setState("ready"); } else setState("nobiz");
+    const { data: adm } = await supabase.rpc("is_platform_admin");
+    setIsAdmin(adm === true);
   };
 
   useEffect(() => {
@@ -56,6 +59,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (state === "loading" || !session) return <div className="grid min-h-screen place-items-center text-muted-foreground">Carregando…</div>;
   if (state === "nobiz" || !business) return <CreateBusiness session={session} onDone={() => load(session)} />;
+  if (business.status === "suspended") return <Suspended reason={business.suspended_reason ?? null} />;
 
   return (
     <BizCtx.Provider value={{ session, business, reload: () => load(session) }}>
@@ -70,6 +74,11 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Link>
             ))}
           </nav>
+          {isAdmin && (
+            <Link to="/admin" className="mt-6 flex items-center gap-3 rounded-lg px-3 py-2 text-sm opacity-80 hover:bg-sidebar-accent hover:opacity-100">
+              <ShieldCheck className="h-4 w-4" />Admin da plataforma
+            </Link>
+          )}
           <div className="mt-auto text-xs opacity-70">
             <p className="font-semibold">{business.name}</p>
             <a className="underline" href={`/agendar/${business.slug}`} target="_blank" rel="noreferrer">/agendar/{business.slug}</a>
@@ -84,6 +93,20 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </div>
     </BizCtx.Provider>
+  );
+}
+
+function Suspended({ reason }: { reason: string | null }) {
+  return (
+    <div className="grid min-h-screen place-items-center p-6">
+      <div className="w-full max-w-md rounded-2xl bg-card p-8 text-center shadow-card">
+        <h1 className="text-2xl font-bold">Conta suspensa</h1>
+        <p className="mt-2 text-sm text-muted-foreground">O acesso do seu negócio ao ConfirmaZap está temporariamente bloqueado.</p>
+        {reason && <p className="mt-3 rounded-lg bg-secondary p-3 text-sm">{reason}</p>}
+        <p className="mt-3 text-sm text-muted-foreground">Fale com o suporte para regularizar.</p>
+        <Button className="mt-5 w-full" variant="outline" onClick={() => supabase.auth.signOut()}>Sair</Button>
+      </div>
+    </div>
   );
 }
 
