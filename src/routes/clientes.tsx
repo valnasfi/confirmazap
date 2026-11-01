@@ -43,6 +43,8 @@ const maskCpf = (v: string) => onlyDigits(v).slice(0, 11).replace(/(\d{3})(\d)/,
 
 const BASIC = "id,name,whatsapp,cpf,consent_at";
 // Data "AAAA-MM-DD" do banco → dd/mm/aaaa, sem passar por fuso horário.
+// ***.346.303-** : mostra só o miolo do CPF.
+const hideCpf = (v: string) => { const d = onlyDigits(v); return d.length === 11 ? `***.${d.slice(3, 6)}.${d.slice(6, 9)}-**` : "***.***.***-**"; };
 const fmtBirth = (d: string | null | undefined) => {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d ?? "");
   return m ? `${m[3]}/${m[2]}/${m[1]}` : "—";
@@ -63,6 +65,8 @@ function Clientes() {
   const [editing, setEditing] = useState<string | "new" | null>(null);
   const [f, setF] = useState<Form>(EMPTY);
   const [saving, setSaving] = useState(false);
+  // CPF de cliente já cadastrado fica mascarado até o profissional pedir para alterar (LGPD).
+  const [cpfOpen, setCpfOpen] = useState(false);
 
   const load = useCallback(async () => {
     // Antes do SQL as colunas novas não existem: tenta da mais completa para a básica em vez de quebrar a tela.
@@ -78,6 +82,7 @@ function Clientes() {
   const open = (c: C | null) => {
     setEditing(c ? c.id : "new");
     setExtra({ ...(c?.extra ?? {}) });
+    setCpfOpen(!c?.cpf);
     setF(c ? { name: c.name ?? "", whatsapp: maskWhatsapp(c.whatsapp), cpf: maskCpf(c.cpf ?? ""), email: c.email ?? "", sex: c.sex ?? "", birth_date: c.birth_date ?? "", address: c.address ?? "", notes: c.notes ?? "" } : EMPTY);
   };
 
@@ -161,7 +166,16 @@ function Clientes() {
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-sm sm:col-span-2">Nome<Input value={f.name} onChange={set("name")} /></label>
             <label className="text-sm">WhatsApp<Input inputMode="tel" value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: maskWhatsapp(e.target.value) })} /></label>
-            <label className="text-sm">CPF<Input inputMode="numeric" value={f.cpf} onChange={(e) => setF({ ...f, cpf: maskCpf(e.target.value) })} /></label>
+            <label className="text-sm">CPF
+              {cpfOpen ? (
+                <Input inputMode="numeric" value={f.cpf} onChange={(e) => setF({ ...f, cpf: maskCpf(e.target.value) })} />
+              ) : (
+                <span className="mt-0 flex gap-2">
+                  <Input readOnly value={hideCpf(f.cpf)} aria-label="CPF protegido" className="text-muted-foreground" />
+                  <Button type="button" variant="secondary" onClick={() => setCpfOpen(true)}>Alterar</Button>
+                </span>
+              )}
+            </label>
             <label className="text-sm">E-mail<Input type="email" value={f.email} onChange={set("email")} /></label>
             <label className="text-sm">Sexo
               <select className="mt-0 flex h-10 w-full rounded-md border bg-background px-3 text-sm" value={f.sex} onChange={(e) => setF({ ...f, sex: e.target.value })}>
