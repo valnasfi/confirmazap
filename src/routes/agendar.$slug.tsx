@@ -28,9 +28,10 @@ function Booking() {
   const [cpf, setCpf] = useState("");
   const [ok, setOk] = useState(false);
   const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<{ appointmentId: string; value: number; qrCode: string | null; pixCopyAndPaste: string | null } | null>(null);
+  const [result, setResult] = useState<{ appointmentId: string; value: number; qrCode: string | null; pixCopyAndPaste: string | null; manageToken: string | null } | null>(null);
   const [paid, setPaid] = useState(false);
   const [expired, setExpired] = useState(false);
+  const [manageToken, setManageToken] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -65,7 +66,7 @@ function Booking() {
       try {
         const s = await getBookingStatus({ data: { appointmentId: result.appointmentId } });
         if (stop) return;
-        if (s.paid || s.status === "confirmed") setPaid(true);
+        if (s.paid || s.status === "confirmed") { setPaid(true); if (s.manageToken) setManageToken(s.manageToken); }
         else if (s.expired || s.status === "canceled") setExpired(true);
       } catch {
         // tenta de novo no próximo ciclo
@@ -82,7 +83,8 @@ function Booking() {
     setSending(true);
     try {
       const r = await createBooking({ data: { businessId: biz.id, serviceId: svc.id, startAt: slot.toISOString(), name, whatsapp: phone, cpf, consent: true } });
-      setResult({ appointmentId: r.appointmentId, value: r.value, qrCode: r.qrCode, pixCopyAndPaste: r.pixCopyAndPaste });
+      setResult({ appointmentId: r.appointmentId, value: r.value, qrCode: r.qrCode, pixCopyAndPaste: r.pixCopyAndPaste, manageToken: r.manageToken });
+      setManageToken(r.manageToken);
       if (r.status === "confirmed") setPaid(true);
     } catch (e) { toast.error((e as Error).message); }
     setSending(false);
@@ -114,6 +116,8 @@ function Booking() {
               <h2 className="text-xl font-bold">Horário confirmado!</h2>
               <p className="mt-1 text-sm text-muted-foreground">{when}</p>
               <p className="mt-4 text-sm">Pagamento do sinal identificado. Te esperamos no horário marcado.</p>
+              {manageToken && <a className="mt-5 inline-block text-sm font-medium underline" href={`/agendamento/${manageToken}`}>Cancelar ou remarcar meu horário</a>}
+              {manageToken && <p className="mt-2 text-xs text-muted-foreground">Guarde este link: você também recebe pelo WhatsApp.</p>}
             </>) : expired ? (<>
               <h2 className="text-xl font-bold">Tempo esgotado</h2>
               <p className="mt-2 text-sm text-muted-foreground">O sinal não foi pago em {HOLD_MINUTES} minutos e o horário foi liberado. Se você já pagou, avise o estabelecimento.</p>

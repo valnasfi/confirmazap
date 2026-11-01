@@ -15,7 +15,7 @@ export const Route = createFileRoute("/agenda")({
   component: () => <AppShell><Agenda /></AppShell>,
 });
 
-type Appt = { id: string; start_at: string; end_at: string; status: string; customers: { name: string; whatsapp: string } | null; services: { name: string; deposit_value: number } | null };
+type Appt = { id: string; start_at: string; end_at: string; status: string; customer_confirmed_at?: string | null; customers: { name: string; whatsapp: string } | null; services: { name: string; deposit_value: number } | null };
 
 function Agenda() {
   const { business, session } = useBiz();
@@ -24,8 +24,11 @@ function Agenda() {
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
-    const { data } = await supabase.from("appointments").select("id,start_at,end_at,status,customers(name,whatsapp),services(name,deposit_value)").eq("business_id", business.id).or(activeHoldFilter());
-    setItems((data as unknown as Appt[]) ?? []);
+    // customer_confirmed_at só existe depois do SQL dos lembretes: sem ele, a agenda continua funcionando.
+    const base = "id,start_at,end_at,status,customers(name,whatsapp),services(name,deposit_value)";
+    let r = await supabase.from("appointments").select(`${base},customer_confirmed_at`).eq("business_id", business.id).or(activeHoldFilter());
+    if (r.error) r = await supabase.from("appointments").select(base).eq("business_id", business.id).or(activeHoldFilter());
+    setItems((r.data as unknown as Appt[]) ?? []);
   };
   useEffect(() => { load(); }, [business.id]);
 
@@ -69,6 +72,7 @@ function Agenda() {
             <p>{sel.services?.name}</p>
             <p>{new Date(sel.start_at).toLocaleString("pt-BR", { dateStyle: "full", timeStyle: "short" })}</p>
             <p>Status: <b>{statusMeta[sel.status]?.label}</b></p>
+            {sel.customer_confirmed_at && <p className="font-medium text-st-confirmed">✔ Cliente confirmou presença pelo WhatsApp</p>}
           </div>}
           <div className="grid grid-cols-2 gap-2">
             <Button onClick={() => setStatus("showed")}>Compareceu</Button>

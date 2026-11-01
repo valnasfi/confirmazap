@@ -52,6 +52,7 @@ type BookingResult = {
   value: number;
   qrCode: string | null;
   pixCopyAndPaste: string | null;
+  manageToken: string | null;
 };
 
 // Cria cliente + agendamento pendente + cobrança Pix do sinal. O horário só é confirmado
@@ -136,7 +137,7 @@ export const createBooking = createServerFn({ method: "POST" })
     if (value <= 0) {
       const { error } = await admin.from("appointments").update({ status: "confirmed" }).eq("id", appt.id);
       if (error) throw new Error(error.message);
-      return { appointmentId: appt.id, status: "confirmed", value: 0, qrCode: null, pixCopyAndPaste: null };
+      return { appointmentId: appt.id, status: "confirmed", value: 0, qrCode: null, pixCopyAndPaste: null, manageToken: appt.manage_token ?? null };
     }
 
     const key = apiKey as string; // garantido pela checagem acima (value > 0)
@@ -177,6 +178,7 @@ export const createBooking = createServerFn({ method: "POST" })
         value,
         qrCode: (qr.encodedImage as string) ?? null,
         pixCopyAndPaste: (qr.payload as string) ?? null,
+        manageToken: appt.manage_token ?? null,
       };
     } catch (e) {
       // Falhou antes de o cliente ver o Pix: libera o horário e não deixa cadastro solto.
@@ -191,10 +193,10 @@ export const getBookingStatus = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ appointmentId: z.string().uuid() }).parse(i))
   .handler(async ({ data }) => {
     const admin = getSupabaseAdmin();
-    const { data: a } = await admin.from("appointments").select("status,deposit_paid,created_at").eq("id", data.appointmentId).maybeSingle();
+    const { data: a } = await admin.from("appointments").select("status,deposit_paid,created_at,manage_token").eq("id", data.appointmentId).maybeSingle();
     if (!a) throw new Error("Agendamento não encontrado");
     const expired = a.status === "pending" && new Date(asUtc(a.created_at)).getTime() < Date.now() - HOLD_MINUTES * 60_000;
-    return { status: a.status as string, paid: a.deposit_paid === true, expired };
+    return { status: a.status as string, paid: a.deposit_paid === true, expired, manageToken: (a.manage_token as string | null) ?? null };
   });
 
 // Marca falta. Se o sinal já foi pago na reserva, não há nova cobrança.

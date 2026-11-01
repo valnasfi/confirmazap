@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSupabaseAdmin } from "./supabaseAdmin";
 import { uazapi } from "./uazapi";
+import { siteUrl } from "./manage.core";
 
 // Confirma quem está logado e qual é o negócio dele.
 async function ownerBusiness(accessToken: string) {
@@ -11,6 +12,14 @@ async function ownerBusiness(accessToken: string) {
   const { data: b } = await admin.from("businesses").select("id,name").eq("owner_id", u.user.id).limit(1).maybeSingle();
   if (!b) throw new Error("Negócio não encontrado");
   return { admin, business: b as { id: string; name: string } };
+}
+
+
+// Avisa o uazapi para mandar as respostas dos clientes ("1" confirma, "2" cancela) para o nosso servidor.
+async function registerWebhook(token: string) {
+  try {
+    await uazapi("/webhook", { token, body: { enabled: true, url: `${siteUrl()}/api/uazapi-webhook`, events: ["messages"], excludeMessages: ["wasSentByApi", "fromMeYes", "isGroupYes"] } });
+  } catch { /* não impede a conexão; o lembrete sai mesmo sem o webhook, só não recebe respostas */ }
 }
 
 const input = z.object({ accessToken: z.string() });
@@ -60,6 +69,7 @@ export const whatsappConnect = createServerFn({ method: "POST" })
       if (insErr) throw new Error(tableHint(insErr.message));
     }
 
+    await registerWebhook(token);
     const r = await uazapi("/instance/connect", { token, body: {} });
     if (r.status === 409) {
       // Já há um pareamento em andamento: só consulta o estado atual.
