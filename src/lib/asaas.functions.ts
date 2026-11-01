@@ -89,18 +89,46 @@ export const createBooking = createServerFn({ method: "POST" })
     if (clash && clash.length) throw new Error("Horário acabou de ser reservado. Escolha outro.");
 
     const phone = data.whatsapp.replace(/\D/g, "");
-    const { data: customer, error: cErr } = await admin
-      .from("customers")
-      .insert({ business_id: biz.id, name: data.name, whatsapp: phone, cpf: data.cpf.replace(/\D/g, ""), consent_at: new Date().toISOString() })
-      .select().single();
-    if (cErr) throw new Error(cErr.message);
+    const cpf = data.cpf.replace(/\D/g, "");
+
+    // Não duplica: o mesmo cliente (mesmo CPF ou mesmo WhatsApp neste negócio) é reaproveitado.
+    // Os dados que o profissional já completou/editou não são sobrescritos.
+    const findCustomer = async () => {
+      const { data: byCpf } = await admin.from("customers").select("*").eq("business_id", biz.id).eq("cpf", cpf).limit(1);
+      if (byCpf?.[0]) return byCpf[0];
+      const { data: byPhone } = await admin.from("customers").select("*").eq("business_id", biz.id).eq("whatsapp", phone).limit(1);
+      return byPhone?.[0] ?? null;
+    };
+    const now = new Date().toISOString();
+    let customer = await findCustomer();
+    let createdCustomer = false;
+    if (customer) {
+      const patch: Record<string, unknown> = { consent_at: now };
+      if (!customer.name) patch["name"] = data.name;
+      if (!customer.cpf) patch["cpf"] = cpf;
+      await admin.from("customers").update(patch).eq("id", customer.id);
+      customer = { ...customer, ...patch };
+    } else {
+      const { data: ins, error: cErr } = await admin
+        .from("customers")
+        .insert({ business_id: biz.id, name: data.name, whatsapp: phone, cpf, consent_at: now })
+        .select().single();
+      if (cErr) {
+        // Duas reservas ao mesmo tempo: a outra chegou primeiro, então usa o cadastro dela.
+        customer = cErr.code === "23505" ? await findCustomer() : null;
+        if (!customer) throw new Error(cErr.message);
+      } else {
+        customer = ins;
+        createdCustomer = true;
+      }
+    }
 
     const { data: appt, error: aErr } = await admin
       .from("appointments")
       .insert({ business_id: biz.id, customer_id: customer.id, service_id: svc.id, start_at: start.toISOString(), end_at: end.toISOString(), status: "pending" })
       .select().single();
     if (aErr) {
-      await admin.from("customers").delete().eq("id", customer.id);
+      if (createdCustomer) await admin.from("customers").delete().eq("id", customer.id);
       throw new Error(aErr.message);
     }
 
@@ -113,16 +141,27 @@ export const createBooking = createServerFn({ method: "POST" })
 
     const key = apiKey as string; // garantido pela checagem acima (value > 0)
     try {
-      const ac = await asaas(key, "/customers", { name: data.name, cpfCnpj: customer.cpf, mobilePhone: phone });
+      // Reaproveita o cliente do Asaas se já existe; se a chave mudou e o ID não vale mais, cria outro.
+      const newAsaasCustomer = () => asaas(key, "/customers", { name: customer.name || data.name, cpfCnpj: customer.cpf || cpf, mobilePhone: phone });
       const dueDate = new Date(Date.now() - 3 * 3600_000).toISOString().slice(0, 10); // data em Brasília
-      const pay = await asaas(key, "/payments", {
-        customer: ac.id,
+      const createPayment = (asaasCustomerId: string) => asaas(key, "/payments", {
+        customer: asaasCustomerId,
         billingType: "PIX",
         value,
         dueDate,
         description: `Sinal de agendamento - ${biz.name}`,
         externalReference: appt.id,
       });
+      const known: string | null = customer.asaas_customer_id ?? null;
+      let ac: { id: string } = { id: known ?? (await newAsaasCustomer()).id };
+      let pay;
+      try {
+        pay = await createPayment(ac.id);
+      } catch (e) {
+        if (!known) throw e;
+        ac = await newAsaasCustomer();
+        pay = await createPayment(ac.id);
+      }
       // Guarda o ID do pagamento logo: é por ele que o webhook acha o agendamento.
       const { error: uErr } = await admin.from("appointments").update({ asaas_payment_id: pay.id }).eq("id", appt.id);
       if (uErr) throw new Error(uErr.message);
@@ -142,7 +181,7 @@ export const createBooking = createServerFn({ method: "POST" })
     } catch (e) {
       // Falhou antes de o cliente ver o Pix: libera o horário e não deixa cadastro solto.
       await admin.from("appointments").delete().eq("id", appt.id);
-      await admin.from("customers").delete().eq("id", customer.id);
+      if (createdCustomer) await admin.from("customers").delete().eq("id", customer.id);
       throw new Error(`Não foi possível gerar o Pix: ${(e as Error).message}`);
     }
   });
