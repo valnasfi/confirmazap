@@ -39,3 +39,6 @@ create unique index if not exists customers_business_cpf_key on public.customers
 
 -- 6) Campos personalizados do cliente (valores ficam em "extra"; os campos são criados em Clientes > Campos personalizados)
 alter table public.customers add column if not exists extra jsonb not null default '{}'::jsonb;
+
+-- 7) Campo Sexo no cadastro do cliente
+alter table public.customers add column if not exists sex text;

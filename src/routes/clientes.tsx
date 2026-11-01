@@ -18,14 +18,14 @@ export const Route = createFileRoute("/clientes")({
 
 type C = {
   id: string; name: string | null; whatsapp: string; cpf: string | null; email: string | null;
-  birth_date: string | null; address: string | null; notes: string | null; consent_at: string | null;
+  sex: string | null; birth_date: string | null; address: string | null; notes: string | null; consent_at: string | null;
   extra?: Record<string, string> | null;
 };
 // Campos extras criados pelo profissional (ficam em businesses.settings.customer_fields; os valores em customers.extra).
 type Field = { id: string; label: string; type: "text" | "number" | "date" };
 const TYPE_LABEL: Record<Field["type"], string> = { text: "Texto", number: "Número", date: "Data" };
-type Form = { name: string; whatsapp: string; cpf: string; email: string; birth_date: string; address: string; notes: string };
-const EMPTY: Form = { name: "", whatsapp: "", cpf: "", email: "", birth_date: "", address: "", notes: "" };
+type Form = { name: string; whatsapp: string; cpf: string; email: string; sex: string; birth_date: string; address: string; notes: string };
+const EMPTY: Form = { name: "", whatsapp: "", cpf: "", email: "", sex: "", birth_date: "", address: "", notes: "" };
 
 // CPF só de pessoa física: 11 dígitos com dígitos verificadores corretos.
 function cpfOk(v: string) {
@@ -42,6 +42,7 @@ const maskCpf = (v: string) => onlyDigits(v).slice(0, 11).replace(/(\d{3})(\d)/,
 
 const BASIC = "id,name,whatsapp,cpf,consent_at";
 const FIELDS = "id,name,whatsapp,cpf,email,birth_date,address,notes,consent_at";
+const SEX_OPTIONS = ["Feminino", "Masculino", "Outro", "Prefere não informar"];
 
 function Clientes() {
   const { business, reload } = useBiz();
@@ -58,7 +59,7 @@ function Clientes() {
   const load = useCallback(async () => {
     // Antes do SQL as colunas novas não existem: tenta da mais completa para a básica em vez de quebrar a tela.
     let data: unknown[] | null = null;
-    for (const cols of [`${FIELDS},extra`, FIELDS, BASIC]) {
+    for (const cols of [`${FIELDS},sex,extra`, FIELDS, BASIC]) {
       const r = await supabase.from("customers").select(cols).eq("business_id", business.id).order("name");
       if (!r.error) { data = r.data as unknown[]; break; }
     }
@@ -69,7 +70,7 @@ function Clientes() {
   const open = (c: C | null) => {
     setEditing(c ? c.id : "new");
     setExtra({ ...(c?.extra ?? {}) });
-    setF(c ? { name: c.name ?? "", whatsapp: maskWhatsapp(c.whatsapp), cpf: maskCpf(c.cpf ?? ""), email: c.email ?? "", birth_date: c.birth_date ?? "", address: c.address ?? "", notes: c.notes ?? "" } : EMPTY);
+    setF(c ? { name: c.name ?? "", whatsapp: maskWhatsapp(c.whatsapp), cpf: maskCpf(c.cpf ?? ""), email: c.email ?? "", sex: c.sex ?? "", birth_date: c.birth_date ?? "", address: c.address ?? "", notes: c.notes ?? "" } : EMPTY);
   };
 
   const save = async () => {
@@ -79,7 +80,7 @@ function Clientes() {
     if (f.email && !isValidEmail(f.email)) { toast.error("E-mail inválido"); return; }
     const payload = {
       name: f.name.trim(), whatsapp: onlyDigits(f.whatsapp), cpf: onlyDigits(f.cpf) || null,
-      email: f.email.trim() || null, birth_date: f.birth_date || null, address: f.address.trim() || null, notes: f.notes.trim() || null,
+      email: f.email.trim() || null, sex: f.sex || null, birth_date: f.birth_date || null, address: f.address.trim() || null, notes: f.notes.trim() || null,
       // Só envia os extras se existem campos criados (mantém valores de campos já apagados, sem exibi-los).
       ...(fields.length > 0 ? { extra: { ...(rows.find((r) => r.id === editing)?.extra ?? {}), ...Object.fromEntries(fields.map((x) => [x.id, (extra[x.id] ?? "").trim()])) } } : {}),
     };
@@ -154,6 +155,12 @@ function Clientes() {
             <label className="text-sm">WhatsApp<Input inputMode="tel" value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: maskWhatsapp(e.target.value) })} /></label>
             <label className="text-sm">CPF<Input inputMode="numeric" value={f.cpf} onChange={(e) => setF({ ...f, cpf: maskCpf(e.target.value) })} /></label>
             <label className="text-sm">E-mail<Input type="email" value={f.email} onChange={set("email")} /></label>
+            <label className="text-sm">Sexo
+              <select className="mt-0 flex h-10 w-full rounded-md border bg-background px-3 text-sm" value={f.sex} onChange={(e) => setF({ ...f, sex: e.target.value })}>
+                <option value="">Não informado</option>
+                {SEX_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </label>
             <label className="text-sm">Data de nascimento<Input type="date" value={f.birth_date} onChange={set("birth_date")} /></label>
             <label className="text-sm sm:col-span-2">Endereço<Input value={f.address} onChange={set("address")} /></label>
             <label className="text-sm sm:col-span-2">Observações<Textarea rows={3} value={f.notes} onChange={set("notes")} placeholder="Preferências, alergias, histórico…" /></label>
