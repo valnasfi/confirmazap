@@ -40,7 +40,7 @@ function Manage() {
   useEffect(() => {
     if (!info || !day) return;
     const to = new Date(day); to.setDate(to.getDate() + 1);
-    getBusySlots({ data: { businessId: info.businessId, from: day.toISOString(), to: to.toISOString() } }).then(setBusySlots).catch(() => setBusySlots([]));
+    getBusySlots({ data: { businessId: info.businessId, from: day.toISOString(), to: to.toISOString(), professionalId: info.professionalId } }).then(setBusySlots).catch(() => setBusySlots([]));
   }, [info, day]);
 
   const slots = useMemo(() => (day && info ? generateSlots(day, info.durationMinutes, busySlots).filter((s) => s > new Date()) : []), [day, info, busySlots]);

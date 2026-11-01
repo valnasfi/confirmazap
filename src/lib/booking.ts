@@ -8,6 +8,12 @@ export const holdCutoff = () => new Date(Date.now() - HOLD_MINUTES * 60_000).toI
 // Filtro PostgREST (.or): reserva válida = já paga/confirmada ou ainda dentro do prazo de pagamento.
 export const activeHoldFilter = () => `status.neq.pending,created_at.gte.${holdCutoff()}`;
 
+// O banco guarda os horários sem fuso (UTC): marca com "Z" para ninguém ler como horário local.
+export function asUtc(value: unknown) {
+  const s = String(value);
+  return /(Z|[+-]\d{2}(:?\d{2})?)$/i.test(s) ? s : s.replace(" ", "T") + "Z";
+}
+
 export function isOpenDay(d: Date) {
   return d.getDay() !== 0; // domingo fechado
 }

@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { Copy } from "lucide-react";
 import { supabase, type Business, type Service } from "@/lib/supabaseClient";
 import { generateSlots, isOpenDay, maskWhatsapp, brl, HOLD_MINUTES } from "@/lib/booking";
+
+type Pro = { id: string; name: string };
 import { getBusySlots, createBooking, getBookingStatus } from "@/lib/asaas.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +22,9 @@ function Booking() {
   const [biz, setBiz] = useState<Business | null | undefined>(undefined);
   const [services, setServices] = useState<Service[]>([]);
   const [svc, setSvc] = useState<Service | null>(null);
+  const [pros, setPros] = useState<Pro[]>([]);
+  // "any" = sem preferência; só aparece a escolha quando há mais de um profissional.
+  const [pro, setPro] = useState<Pro | "any" | null>(null);
   const [day, setDay] = useState<Date | null>(null);
   const [busy, setBusy] = useState<string[]>([]);
   const [slot, setSlot] = useState<Date | null>(null);
@@ -42,6 +47,11 @@ function Booking() {
       if (b) {
         const { data: s } = await supabase.from("services").select("*").eq("business_id", b.id).eq("active", true).order("name");
         setServices((s as Service[]) ?? []);
+        // professionals só existe depois do SQL dos profissionais: sem ele, a agenda é única como antes.
+        const { data: p, error: pErr } = await supabase.from("professionals").select("id,name").eq("business_id", b.id).eq("active", true).order("created_at");
+        const list = pErr ? [] : ((p as Pro[]) ?? []);
+        setPros(list);
+        if (list.length === 1) setPro(list[0]!);
       }
     })();
   }, [slug]);
@@ -55,8 +65,8 @@ function Booking() {
   useEffect(() => {
     if (!biz || !day) return;
     const to = new Date(day); to.setDate(to.getDate() + 1);
-    getBusySlots({ data: { businessId: biz.id, from: day.toISOString(), to: to.toISOString() } }).then(setBusy).catch(() => setBusy([]));
-  }, [biz, day]);
+    getBusySlots({ data: { businessId: biz.id, from: day.toISOString(), to: to.toISOString(), professionalId: pro && pro !== "any" ? pro.id : null } }).then(setBusy).catch(() => setBusy([]));
+  }, [biz, day, pro]);
 
   // Depois de gerar o Pix, consulta o status até o pagamento ser identificado (ou o prazo acabar).
   useEffect(() => {
@@ -82,7 +92,7 @@ function Booking() {
     if (!biz || !svc || !slot) return;
     setSending(true);
     try {
-      const r = await createBooking({ data: { businessId: biz.id, serviceId: svc.id, startAt: slot.toISOString(), name, whatsapp: phone, cpf, consent: true } });
+      const r = await createBooking({ data: { businessId: biz.id, serviceId: svc.id, startAt: slot.toISOString(), name, whatsapp: phone, cpf, professionalId: pro && pro !== "any" ? pro.id : null, consent: true } });
       setResult({ appointmentId: r.appointmentId, value: r.value, qrCode: r.qrCode, pixCopyAndPaste: r.pixCopyAndPaste, manageToken: r.manageToken });
       setManageToken(r.manageToken);
       if (r.status === "confirmed") setPaid(true);
@@ -146,8 +156,17 @@ function Booking() {
               ))}
             </div>
           </section>
-          {svc && <section className="rounded-2xl bg-card p-5 shadow-card">
-            <h2 className="font-semibold">2. Dia e horário</h2>
+          {svc && pros.length > 1 && <section className="rounded-2xl bg-card p-5 shadow-card">
+            <h2 className="font-semibold">2. Profissional</h2>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <button onClick={() => { setPro("any"); setSlot(null); }} className={`rounded-xl border p-3 text-left ${pro === "any" ? "border-primary bg-secondary" : ""}`}><b>Sem preferência</b><span className="block text-xs text-muted-foreground">O primeiro disponível</span></button>
+              {pros.map((p) => (
+                <button key={p.id} onClick={() => { setPro(p); setSlot(null); }} className={`rounded-xl border p-3 text-left ${pro !== "any" && pro?.id === p.id ? "border-primary bg-secondary" : ""}`}><b>{p.name}</b></button>
+              ))}
+            </div>
+          </section>}
+          {svc && (pro || pros.length === 0) && <section className="rounded-2xl bg-card p-5 shadow-card">
+            <h2 className="font-semibold">{pros.length > 1 ? "3" : "2"}. Dia e horário</h2>
             <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
               {days.map((d) => (
                 <button key={d.toISOString()} onClick={() => { setDay(d); setSlot(null); }} className={`min-w-16 rounded-xl border px-3 py-2 text-center text-sm ${day?.getTime() === d.getTime() ? "border-primary bg-primary text-primary-foreground" : ""}`}>
@@ -165,7 +184,7 @@ function Booking() {
             </div>}
           </section>}
           {slot && svc && <section className="space-y-3 rounded-2xl bg-card p-5 shadow-card">
-            <h2 className="font-semibold">3. Seus dados</h2>
+            <h2 className="font-semibold">{pros.length > 1 ? "4" : "3"}. Seus dados</h2>
             <Input placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} />
             <Input placeholder="(11) 98765-4321" inputMode="tel" value={phone} onChange={(e) => setPhone(maskWhatsapp(e.target.value))} />
             <Input placeholder="CPF (exigido pelo Pix)" inputMode="numeric" value={cpf} onChange={(e) => setCpf(e.target.value.replace(/\D/g, "").slice(0, 11))} />

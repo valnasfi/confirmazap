@@ -15,6 +15,7 @@ import { BirthdaySettings } from "@/components/BirthdaySettings";
 import { RemindersSettings } from "@/components/RemindersSettings";
 import { ReactivationSettings } from "@/components/ReactivationSettings";
 import { PlanBilling } from "@/components/PlanBilling";
+import { ProfessionalsManager } from "@/components/ProfessionalsManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/config")({
@@ -83,6 +84,7 @@ function Config() {
         <TabsList className="h-auto w-full justify-start overflow-x-auto">
           <TabsTrigger value="negocio">Negócio e regras</TabsTrigger>
           <TabsTrigger value="servicos">Serviços</TabsTrigger>
+          <TabsTrigger value="profissionais">Profissionais</TabsTrigger>
           <TabsTrigger value="identidade">Identidade visual</TabsTrigger>
           <TabsTrigger value="plano">Plano (financeiro)</TabsTrigger>
         </TabsList>
@@ -143,6 +145,10 @@ function Config() {
         </div>
         <Button className="mt-3" disabled={!n.name || !n.price} onClick={add}>Adicionar serviço</Button>
       </section>
+        </TabsContent>
+
+        <TabsContent value="profissionais" className="mt-6">
+          <ProfessionalsManager />
         </TabsContent>
 
         <TabsContent value="identidade" className="mt-6">

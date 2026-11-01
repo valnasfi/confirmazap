@@ -12,7 +12,7 @@ async function load(token: string) {
   const admin = getSupabaseAdmin();
   const { data: a } = await admin
     .from("appointments")
-    .select("id,business_id,service_id,start_at,end_at,status,deposit_paid,businesses(name,slug,logo_url,whatsapp,settings,status),services(name,duration_minutes,deposit_value)")
+    .select("*,businesses(name,slug,logo_url,whatsapp,settings,status),services(name,duration_minutes,deposit_value)")
     .eq("manage_token", token)
     .maybeSingle();
   if (!a) throw new Error("Agendamento não encontrado. Confira o link.");
@@ -36,6 +36,7 @@ export const getManage = createServerFn({ method: "POST" })
       startAt: asUtc(a.start_at),
       status: a.status as string,
       depositPaid: a.deposit_paid === true,
+      professionalId: (a.professional_id ?? null) as string | null,
       cancelHours: hours,
       canChange: a.status === "confirmed" && upcoming,
       freeWindow: withinFreeWindow(a.start_at, hours),
@@ -68,10 +69,12 @@ export const rescheduleByToken = createServerFn({ method: "POST" })
     if (Number.isNaN(start.getTime()) || start.getTime() < Date.now()) throw new Error("Horário inválido. Escolha outro.");
     const end = new Date(start.getTime() + Number(a.services?.duration_minutes ?? 60) * 60000);
 
-    const { data: clash } = await admin
+    let clashQuery = admin
       .from("appointments").select("id")
       .eq("business_id", a.business_id).eq("start_at", start.toISOString())
-      .neq("status", "canceled").neq("id", a.id).or(activeHoldFilter()).limit(1);
+      .neq("status", "canceled").neq("id", a.id).or(activeHoldFilter());
+    if (a.professional_id) clashQuery = clashQuery.eq("professional_id", a.professional_id); // remarca com o mesmo profissional
+    const { data: clash } = await clashQuery.limit(1);
     if (clash && clash.length) throw new Error("Esse horário acabou de ser reservado. Escolha outro.");
 
     const { error } = await admin.from("appointments").update({ start_at: start.toISOString(), end_at: end.toISOString(), customer_confirmed_at: null }).eq("id", a.id);

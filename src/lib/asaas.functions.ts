@@ -2,6 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSupabaseAdmin } from "./supabaseAdmin";
 import { HOLD_MINUTES, activeHoldFilter } from "./booking";
+import { getEntitlements, getUsage } from "./plans.core";
+
+// Profissionais ativos do negócio. Sem a tabela (SQL ainda não rodado) ou sem nenhum, a agenda vale para o negócio todo.
+async function activePros(admin: ReturnType<typeof getSupabaseAdmin>, businessId: string) {
+  const { data, error } = await admin.from("professionals").select("id,name").eq("business_id", businessId).eq("active", true).order("created_at");
+  return error ? [] : ((data ?? []) as Array<{ id: string; name: string }>);
+}
 
 function asaasBase() {
   return process.env["ASAAS_ENV"] === "production"
@@ -31,19 +38,30 @@ function asUtc(value: unknown) {
 }
 
 // Horários ocupados (público, só devolve horários). Reserva não paga fora do prazo não ocupa o horário.
+// Com professionalId: os horários desse profissional. Sem ele ("sem preferência"): só os horários em que TODOS estão ocupados.
 export const getBusySlots = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ businessId: z.string().uuid(), from: z.string(), to: z.string() }).parse(i))
+  .inputValidator((i: unknown) => z.object({ businessId: z.string().uuid(), from: z.string(), to: z.string(), professionalId: z.string().uuid().nullish() }).parse(i))
   .handler(async ({ data }) => {
     const admin = getSupabaseAdmin();
+    const pros = await activePros(admin, data.businessId);
     const { data: rows } = await admin
       .from("appointments")
-      .select("start_at")
+      .select("*")
       .eq("business_id", data.businessId)
       .neq("status", "canceled")
       .or(activeHoldFilter())
       .gte("start_at", data.from)
       .lt("start_at", data.to);
-    return (rows ?? []).map((r) => asUtc(r.start_at));
+    const all = (rows ?? []) as Array<{ start_at: unknown; professional_id?: string | null }>;
+    if (pros.length === 0) return all.map((r) => asUtc(r.start_at));
+    if (data.professionalId) return all.filter((r) => r.professional_id === data.professionalId).map((r) => asUtc(r.start_at));
+    const busyBy = new Map<string, Set<string>>();
+    for (const r of all) {
+      const k = asUtc(r.start_at);
+      if (!busyBy.has(k)) busyBy.set(k, new Set());
+      if (r.professional_id) busyBy.get(k)!.add(r.professional_id);
+    }
+    return [...busyBy.entries()].filter(([, set]) => pros.every((p) => set.has(p.id))).map(([k]) => k);
   });
 
 type BookingResult = {
@@ -66,6 +84,7 @@ export const createBooking = createServerFn({ method: "POST" })
       name: z.string().min(2).max(120),
       whatsapp: z.string().min(10).max(20),
       cpf: z.string().min(11).max(18),
+      professionalId: z.string().uuid().nullish(),
       consent: z.literal(true),
     }).parse(i),
   )
@@ -76,6 +95,14 @@ export const createBooking = createServerFn({ method: "POST" })
     if (!biz || !svc) throw new Error("Serviço não encontrado");
     if (biz.status === "suspended") throw new Error("Este negócio está temporariamente indisponível.");
 
+    // Plano: teste/assinatura vencidos bloqueiam novos agendamentos; o Starter tem teto mensal.
+    const ent = await getEntitlements(admin, biz.id);
+    if (ent.expired) throw new Error("Este negócio está temporariamente indisponível para novos agendamentos.");
+    if (ent.limits.maxAppointmentsPerMonth !== null) {
+      const usage = await getUsage(admin, biz.id);
+      if (usage.appointments >= ent.limits.maxAppointmentsPerMonth) throw new Error("Este negócio atingiu o limite de agendamentos deste mês. Fale com o estabelecimento.");
+    }
+
     const value = Number(svc.deposit_value ?? 0);
     const apiKey: string | undefined = biz.asaas_api_key || process.env["ASAAS_API_KEY"];
     if (value > 0 && !apiKey) throw new Error("Este negócio ainda não ativou o recebimento por Pix. Fale com o estabelecimento.");
@@ -83,11 +110,19 @@ export const createBooking = createServerFn({ method: "POST" })
     const start = new Date(data.startAt);
     if (Number.isNaN(start.getTime()) || start.getTime() < Date.now()) throw new Error("Horário inválido. Escolha outro.");
     const end = new Date(start.getTime() + svc.duration_minutes * 60000);
-    const { data: clash } = await admin
-      .from("appointments").select("id")
-      .eq("business_id", biz.id).eq("start_at", start.toISOString())
-      .neq("status", "canceled").or(activeHoldFilter()).limit(1);
-    if (clash && clash.length) throw new Error("Horário acabou de ser reservado. Escolha outro.");
+    // Quem atende: o profissional escolhido ou, sem preferência, o primeiro livre naquele horário.
+    const pros = await activePros(admin, biz.id);
+    if (data.professionalId && !pros.some((p) => p.id === data.professionalId)) throw new Error("Este profissional não está disponível. Escolha outro.");
+    const candidates = pros.length === 0 ? [null] : data.professionalId ? [data.professionalId] : pros.map((p) => p.id);
+    let professionalId: string | null = null;
+    let free = false;
+    for (const cand of candidates) {
+      let q = admin.from("appointments").select("id").eq("business_id", biz.id).eq("start_at", start.toISOString()).neq("status", "canceled").or(activeHoldFilter());
+      if (cand) q = q.eq("professional_id", cand);
+      const { data: clash } = await q.limit(1);
+      if (!clash || !clash.length) { professionalId = cand; free = true; break; }
+    }
+    if (!free) throw new Error("Horário acabou de ser reservado. Escolha outro.");
 
     const phone = data.whatsapp.replace(/\D/g, "");
     const cpf = data.cpf.replace(/\D/g, "");
@@ -126,7 +161,7 @@ export const createBooking = createServerFn({ method: "POST" })
 
     const { data: appt, error: aErr } = await admin
       .from("appointments")
-      .insert({ business_id: biz.id, customer_id: customer.id, service_id: svc.id, start_at: start.toISOString(), end_at: end.toISOString(), status: "pending" })
+      .insert({ business_id: biz.id, customer_id: customer.id, service_id: svc.id, start_at: start.toISOString(), end_at: end.toISOString(), status: "pending", ...(professionalId ? { professional_id: professionalId } : {}) })
       .select().single();
     if (aErr) {
       if (createdCustomer) await admin.from("customers").delete().eq("id", customer.id);

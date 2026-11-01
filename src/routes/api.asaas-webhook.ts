@@ -25,7 +25,7 @@ async function confirmPayment(paymentId: string) {
 
   const { data: appt, error } = await admin
     .from("appointments")
-    .select("id,business_id,status,start_at")
+    .select("*")
     .eq("asaas_payment_id", paymentId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -40,14 +40,15 @@ async function confirmPayment(paymentId: string) {
   if (appt.status === "canceled") { await setPayment("refund_needed"); return; }
 
   // Pendente: quem paga primeiro fica com o horário.
-  const { data: taken, error: tErr } = await admin
+  let takenQuery = admin
     .from("appointments")
     .select("id")
     .eq("business_id", appt.business_id)
     .eq("start_at", appt.start_at)
     .neq("id", appt.id)
-    .in("status", ["confirmed", "showed", "no_show"])
-    .limit(1);
+    .in("status", ["confirmed", "showed", "no_show"]);
+  if (appt.professional_id) takenQuery = takenQuery.eq("professional_id", appt.professional_id); // outro profissional no mesmo horário não conflita
+  const { data: taken, error: tErr } = await takenQuery.limit(1);
   if (tErr) throw new Error(tErr.message);
 
   if (taken && taken.length) {
