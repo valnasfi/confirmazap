@@ -6,6 +6,7 @@ import { AppShell, useBiz } from "@/components/AppShell";
 import { supabase } from "@/lib/supabaseClient";
 import { maskWhatsapp } from "@/lib/booking";
 import { isValidEmail, isValidPhone, onlyDigits } from "@/lib/document";
+import { usePlan } from "@/lib/usePlan";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,6 +47,8 @@ const SEX_OPTIONS = ["Feminino", "Masculino", "Outro", "Prefere não informar"];
 
 function Clientes() {
   const { business, reload } = useBiz();
+  const { info: plan } = usePlan();
+  const customOk = !plan || plan.limits.customFields; // sem informação, não trava
   const fields: Field[] = ((business.settings ?? {}) as { customer_fields?: Field[] }).customer_fields ?? [];
   const [manage, setManage] = useState(false);
   const [draft, setDraft] = useState<Field[]>([]);
@@ -124,7 +127,7 @@ function Clientes() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold">Clientes</h1>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={openManage}><SlidersHorizontal className="mr-2 h-4 w-4" />Campos personalizados</Button>
+          <Button variant="secondary" disabled={!customOk} title={customOk ? undefined : "Disponível no plano Pro"} onClick={openManage}><SlidersHorizontal className="mr-2 h-4 w-4" />Campos personalizados{!customOk && <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase">Pro</span>}</Button>
           <Button onClick={() => open(null)}><Plus className="mr-2 h-4 w-4" />Novo cliente</Button>
         </div>
       </div>

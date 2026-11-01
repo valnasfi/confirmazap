@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { uazapi } from "@/lib/uazapi";
 import { asUtc, manageUrl, reminderText, toWaNumber } from "@/lib/manage.core";
+import { getEntitlements } from "@/lib/plans.core";
 
 // Chamado a cada 15 minutos pelo agendador do Supabase (pg_cron + pg_net). Veja supabase-lembretes.sql.
 // Seguro para repetir: cada lembrete (agendamento + tipo) é reservado antes do envio e nunca sai duas vezes.
@@ -28,6 +29,8 @@ async function run() {
     if (cfg.enabled === false) continue; // ligado por padrão
     const { data: conn } = await admin.from("whatsapp_connections").select("instance_token").eq("business_id", b.id).maybeSingle();
     if (!conn) continue;
+    const ent = await getEntitlements(admin, b.id);
+    if (ent.expired) continue; // teste/assinatura vencidos: sem envios automáticos
 
     const { data: appts } = await admin
       .from("appointments")
@@ -44,7 +47,7 @@ async function run() {
 
       // Quem agendou em cima da hora não precisa do lembrete daquele prazo.
       let kind: "24h" | "2h" | null = null;
-      if (hoursTo <= 2) { if (cfg.h2 !== false && createdMs <= startMs - 2 * 3600_000) kind = "2h"; }
+      if (hoursTo <= 2) { if (cfg.h2 !== false && ent.limits.reminder2h && createdMs <= startMs - 2 * 3600_000) kind = "2h"; }
       else if (hoursTo <= 24) { if (cfg.h24 !== false && createdMs <= startMs - 24 * 3600_000) kind = "24h"; }
       if (!kind || !a.manage_token) continue;
 

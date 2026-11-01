@@ -15,6 +15,7 @@ import { BirthdaySettings } from "@/components/BirthdaySettings";
 import { RemindersSettings } from "@/components/RemindersSettings";
 import { ReactivationSettings } from "@/components/ReactivationSettings";
 import { PlanBilling } from "@/components/PlanBilling";
+import { addService } from "@/lib/services.functions";
 import { ProfessionalsManager } from "@/components/ProfessionalsManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -38,8 +39,11 @@ function Config() {
   useEffect(() => { load(); }, [business.id]);
 
   const add = async () => {
-    const { error } = await supabase.from("services").insert({ business_id: business.id, name: n.name, duration_minutes: Number(n.duration), price: Number(n.price), deposit_value: Number(n.deposit) });
-    if (error) { toast.error(error.message); return; }
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      if (!sess.session) throw new Error("Sessão expirada. Entre de novo.");
+      await addService({ data: { accessToken: sess.session.access_token, name: n.name, duration: Number(n.duration), price: Number(n.price), deposit: Number(n.deposit) } });
+    } catch (e) { toast.error((e as Error).message); return; }
     setN({ name: "", duration: "60", price: "", deposit: "30" }); load();
   };
   const upd = async (id: string, patch: Partial<Service>) => { await supabase.from("services").update(patch).eq("id", id); load(); };

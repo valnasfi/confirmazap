@@ -4,6 +4,7 @@ import type { Session } from "@supabase/supabase-js";
 import { CalendarDays, LayoutDashboard, LogOut, Receipt, Settings, ShieldCheck, Users, MessageCircleHeart } from "lucide-react";
 import { supabase, supabaseConfigured, type Business } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
+import { PlanBanner } from "@/components/PlanBanner";
 import { maskWhatsapp } from "@/lib/booking";
 import { isValidDocument, isValidEmail, isValidPhone, maskDocument, onlyDigits } from "@/lib/document";
 
@@ -91,7 +92,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex gap-1 overflow-x-auto border-b bg-card p-2 md:hidden">
             {nav.map((n) => <Link key={n.to} to={n.to} className="whitespace-nowrap rounded-md px-3 py-1.5 text-sm" activeProps={{ className: "bg-secondary font-semibold" }}>{n.label}</Link>)}
           </div>
-          <main className="mx-auto max-w-6xl p-5 md:p-8">{children}</main>
+          <main className="mx-auto max-w-6xl p-5 md:p-8"><PlanBanner />{children}</main>
         </div>
       </div>
     </BizCtx.Provider>

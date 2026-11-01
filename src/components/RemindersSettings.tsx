@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { BellRing } from "lucide-react";
 import { useBiz } from "@/components/AppShell";
 import { supabase } from "@/lib/supabaseClient";
+import { usePlan } from "@/lib/usePlan";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
@@ -18,6 +19,8 @@ export function RemindersSettings() {
   const [h24, setH24] = useState(cfg.h24 !== false);
   const [h2, setH2] = useState(cfg.h2 !== false);
   const [saving, setSaving] = useState(false);
+  const { info: plan } = usePlan();
+  const no2h = Boolean(plan) && !plan!.limits.reminder2h;
 
   const save = async () => {
     setSaving(true);
@@ -37,7 +40,7 @@ export function RemindersSettings() {
       <p className="mt-1 text-sm text-muted-foreground">O cliente recebe o lembrete pelo seu WhatsApp e responde <b>1</b> para confirmar ou <b>2</b> para cancelar. A mensagem também leva um link para remarcar. Envios entre 7h e 21h, e só com o WhatsApp conectado.</p>
       <div className={`mt-4 space-y-3 text-sm ${enabled ? "" : "pointer-events-none opacity-50"}`}>
         <label className="flex items-center gap-3"><Checkbox checked={h24} onCheckedChange={(v) => setH24(v === true)} />Lembrete 24 horas antes</label>
-        <label className="flex items-center gap-3"><Checkbox checked={h2} onCheckedChange={(v) => setH2(v === true)} />Lembrete 2 horas antes</label>
+        <label className="flex items-center gap-3"><Checkbox disabled={no2h} checked={h2 && !no2h} onCheckedChange={(v) => setH2(v === true)} />Lembrete 2 horas antes{no2h && <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase">Pro</span>}</label>
       </div>
       <p className="mt-3 text-xs text-muted-foreground">Cancelamentos feitos pelo cliente seguem a regra "Cancelamento grátis até (horas antes)" acima: dentro do prazo o sinal é devolvido; fora dele, o sinal fica com você.</p>
       <Button className="mt-4" disabled={saving} onClick={save}>{saving ? "Salvando…" : "Salvar"}</Button>

@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { uazapi } from "@/lib/uazapi";
 import { DEFAULT_REACTIVATION_MESSAGE, renderReactivation, type ReactivationSettings } from "@/lib/birthday";
 import { asUtc, siteUrl, toWaNumber } from "@/lib/manage.core";
+import { getEntitlements } from "@/lib/plans.core";
 
 // Chamado de hora em hora pelo agendador do Supabase (veja supabase-reativacao.sql).
 // Envia "sentimos sua falta" a quem já foi atendido, não volta há X dias e não tem horário marcado.
@@ -33,6 +34,8 @@ async function run() {
 
     const { data: conn } = await admin.from("whatsapp_connections").select("instance_token").eq("business_id", b.id).maybeSingle();
     if (!conn) continue;
+    const ent = await getEntitlements(admin, b.id);
+    if (ent.expired || !ent.limits.reactivation) continue; // recurso do plano Pro (e do teste)
 
     // Última visita e se já existe horário futuro, por cliente.
     const { data: appts } = await admin.from("appointments").select("customer_id,start_at,status").eq("business_id", b.id).in("status", ["confirmed", "showed"]).limit(10000);

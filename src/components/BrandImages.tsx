@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { ImageUp, Trash2 } from "lucide-react";
 import { useBiz } from "@/components/AppShell";
 import { supabase } from "@/lib/supabaseClient";
+import { usePlan } from "@/lib/usePlan";
 import { Button } from "@/components/ui/button";
 
 const BUCKET = "business-assets";
@@ -64,6 +65,8 @@ async function removeByUrl(url: string) {
 export function BrandImages() {
   const { business, reload } = useBiz();
   const [busy, setBusy] = useState<Kind | null>(null);
+  const { info: plan } = usePlan();
+  const bannerLocked = Boolean(plan) && !plan!.limits.banner;
 
   const send = async (kind: Kind, file: File) => {
     if (!ACCEPT.includes(file.type)) { toast.error("Use uma imagem PNG, JPG ou WebP."); return; }
@@ -114,14 +117,14 @@ export function BrandImages() {
       <p className="mt-1 text-sm text-muted-foreground">Aparecem na sua página de agendamento. A imagem é reduzida automaticamente antes do envio, então pode escolher a foto original.</p>
       <div className="mt-5 space-y-6">
         <Uploader kind="logo" url={business.logo_url} busy={busy === "logo"} disabled={busy !== null} onPick={(f) => send("logo", f)} onRemove={() => remove("logo")} />
-        <Uploader kind="banner" url={business.banner_url ?? null} busy={busy === "banner"} disabled={busy !== null} onPick={(f) => send("banner", f)} onRemove={() => remove("banner")} />
+        <Uploader kind="banner" url={business.banner_url ?? null} busy={busy === "banner"} locked={bannerLocked} disabled={busy !== null || bannerLocked} onPick={(f) => send("banner", f)} onRemove={() => remove("banner")} />
       </div>
     </section>
   );
 }
 
-function Uploader({ kind, url, busy, disabled, onPick, onRemove }: {
-  kind: Kind; url: string | null; busy: boolean; disabled: boolean; onPick: (f: File) => void; onRemove: () => void;
+function Uploader({ kind, url, busy, disabled, locked, onPick, onRemove }: {
+  kind: Kind; url: string | null; busy: boolean; disabled: boolean; locked?: boolean; onPick: (f: File) => void; onRemove: () => void;
 }) {
   const ref = useRef<HTMLInputElement>(null);
   const spec = SPEC[kind];
@@ -149,7 +152,7 @@ function Uploader({ kind, url, busy, disabled, onPick, onRemove }: {
           {url && <Button type="button" variant="ghost" disabled={disabled} onClick={onRemove}><Trash2 className="mr-2 h-4 w-4" />Remover</Button>}
         </div>
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">{spec.hint}</p>
+      <p className="mt-2 text-xs text-muted-foreground">{locked ? "O banner é um recurso do plano Pro. Veja em Configurações > Plano." : spec.hint}</p>
     </div>
   );
 }

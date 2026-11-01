@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { uazapi } from "@/lib/uazapi";
+import { getEntitlements } from "@/lib/plans.core";
 import { DEFAULT_BIRTHDAY_MESSAGE, renderBirthday, type BirthdaySettings } from "@/lib/birthday";
 
 // Chamado de hora em hora pelo agendador do Supabase (pg_cron + pg_net). Veja supabase-aniversarios.sql.
@@ -28,6 +29,8 @@ async function run() {
 
     const { data: conn } = await admin.from("whatsapp_connections").select("instance_token").eq("business_id", b.id).maybeSingle();
     if (!conn) continue; // WhatsApp ainda não conectado
+    const ent = await getEntitlements(admin, b.id);
+    if (ent.expired || !ent.limits.birthday) continue; // recurso do plano Pro (e do teste)
 
     // marketing_opt_out só existe depois do SQL da reativação: sem a coluna, ninguém está bloqueado.
     let cr = await admin.from("customers").select("id,name,whatsapp,birth_date,marketing_opt_out").eq("business_id", b.id).not("birth_date", "is", null);

@@ -13,5 +13,12 @@ export const getPlanInfo = createServerFn({ method: "POST" })
     const { data: b } = await admin.from("businesses").select("id").eq("owner_id", u.user.id).limit(1).maybeSingle();
     if (!b) throw new Error("Negócio não encontrado");
     const [ent, usage] = await Promise.all([getEntitlements(admin, b.id), getUsage(admin, b.id)]);
-    return { ...ent, usage };
+    // Colunas da cobrança só existem depois do SQL da assinatura.
+    const { data: x } = await admin.from("subscriptions").select("pending_plan,invoice_url,asaas_subscription_id").eq("business_id", b.id).maybeSingle();
+    return {
+      ...ent, usage,
+      pendingPlan: (x?.pending_plan ?? null) as "starter" | "pro" | null,
+      invoiceUrl: (x?.invoice_url ?? null) as string | null,
+      hasSubscription: Boolean(x?.asaas_subscription_id),
+    };
   });
