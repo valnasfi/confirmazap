@@ -36,3 +36,6 @@ end $$;
 -- 5) Trava no banco: não existe mais dois clientes iguais no mesmo negócio
 create unique index if not exists customers_business_whatsapp_key on public.customers (business_id, whatsapp);
 create unique index if not exists customers_business_cpf_key on public.customers (business_id, cpf) where cpf is not null;
+
+-- 6) Campos personalizados do cliente (valores ficam em "extra"; os campos são criados em Clientes > Campos personalizados)
+alter table public.customers add column if not exists extra jsonb not null default '{}'::jsonb;

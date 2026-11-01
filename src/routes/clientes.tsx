@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, SlidersHorizontal, Trash2 } from "lucide-react";
 import { AppShell, useBiz } from "@/components/AppShell";
 import { supabase } from "@/lib/supabaseClient";
 import { maskWhatsapp } from "@/lib/booking";
@@ -19,7 +19,11 @@ export const Route = createFileRoute("/clientes")({
 type C = {
   id: string; name: string | null; whatsapp: string; cpf: string | null; email: string | null;
   birth_date: string | null; address: string | null; notes: string | null; consent_at: string | null;
+  extra?: Record<string, string> | null;
 };
+// Campos extras criados pelo profissional (ficam em businesses.settings.customer_fields; os valores em customers.extra).
+type Field = { id: string; label: string; type: "text" | "number" | "date" };
+const TYPE_LABEL: Record<Field["type"], string> = { text: "Texto", number: "Número", date: "Data" };
 type Form = { name: string; whatsapp: string; cpf: string; email: string; birth_date: string; address: string; notes: string };
 const EMPTY: Form = { name: "", whatsapp: "", cpf: "", email: "", birth_date: "", address: "", notes: "" };
 
@@ -36,10 +40,15 @@ function cpfOk(v: string) {
 }
 const maskCpf = (v: string) => onlyDigits(v).slice(0, 11).replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
 
+const BASIC = "id,name,whatsapp,cpf,consent_at";
 const FIELDS = "id,name,whatsapp,cpf,email,birth_date,address,notes,consent_at";
 
 function Clientes() {
-  const { business } = useBiz();
+  const { business, reload } = useBiz();
+  const fields: Field[] = ((business.settings ?? {}) as { customer_fields?: Field[] }).customer_fields ?? [];
+  const [manage, setManage] = useState(false);
+  const [draft, setDraft] = useState<Field[]>([]);
+  const [extra, setExtra] = useState<Record<string, string>>({});
   const [rows, setRows] = useState<C[]>([]);
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<string | "new" | null>(null);
@@ -47,15 +56,19 @@ function Clientes() {
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
-    let { data, error } = await supabase.from("customers").select(FIELDS).eq("business_id", business.id).order("name");
-    // Antes do SQL do cadastro as colunas novas não existem: cai na lista básica em vez de quebrar a tela.
-    if (error) ({ data } = await supabase.from("customers").select("id,name,whatsapp,cpf,consent_at").eq("business_id", business.id).order("name"));
+    // Antes do SQL as colunas novas não existem: tenta da mais completa para a básica em vez de quebrar a tela.
+    let data: unknown[] | null = null;
+    for (const cols of [`${FIELDS},extra`, FIELDS, BASIC]) {
+      const r = await supabase.from("customers").select(cols).eq("business_id", business.id).order("name");
+      if (!r.error) { data = r.data as unknown[]; break; }
+    }
     setRows((data as C[]) ?? []);
   }, [business.id]);
   useEffect(() => { load(); }, [load]);
 
   const open = (c: C | null) => {
     setEditing(c ? c.id : "new");
+    setExtra({ ...(c?.extra ?? {}) });
     setF(c ? { name: c.name ?? "", whatsapp: maskWhatsapp(c.whatsapp), cpf: maskCpf(c.cpf ?? ""), email: c.email ?? "", birth_date: c.birth_date ?? "", address: c.address ?? "", notes: c.notes ?? "" } : EMPTY);
   };
 
@@ -67,6 +80,8 @@ function Clientes() {
     const payload = {
       name: f.name.trim(), whatsapp: onlyDigits(f.whatsapp), cpf: onlyDigits(f.cpf) || null,
       email: f.email.trim() || null, birth_date: f.birth_date || null, address: f.address.trim() || null, notes: f.notes.trim() || null,
+      // Só envia os extras se existem campos criados (mantém valores de campos já apagados, sem exibi-los).
+      ...(fields.length > 0 ? { extra: { ...(rows.find((r) => r.id === editing)?.extra ?? {}), ...Object.fromEntries(fields.map((x) => [x.id, (extra[x.id] ?? "").trim()])) } } : {}),
     };
     setSaving(true);
     const { error } = editing === "new"
@@ -85,6 +100,19 @@ function Clientes() {
     load();
   };
 
+  const openManage = () => { setDraft(fields.map((x) => ({ ...x }))); setManage(true); };
+  const saveFields = async () => {
+    const labels = draft.map((x) => x.label.trim().toLowerCase());
+    if (labels.some((l) => !l)) { toast.error("Dê um nome a todos os campos"); return; }
+    if (new Set(labels).size !== labels.length) { toast.error("Há dois campos com o mesmo nome"); return; }
+    const settings = { ...((business.settings ?? {}) as Record<string, unknown>), customer_fields: draft.map((x) => ({ ...x, label: x.label.trim() })) };
+    const { error } = await supabase.from("businesses").update({ settings }).eq("id", business.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Campos salvos");
+    setManage(false);
+    reload();
+  };
+
   const term = q.trim().toLowerCase();
   const digits = onlyDigits(q);
   const shown = rows.filter((r) => !term || (r.name ?? "").toLowerCase().includes(term) || (digits && (r.whatsapp.includes(digits) || (r.cpf ?? "").includes(digits))) || (r.email ?? "").toLowerCase().includes(term));
@@ -94,7 +122,10 @@ function Clientes() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold">Clientes</h1>
-        <Button onClick={() => open(null)}><Plus className="mr-2 h-4 w-4" />Novo cliente</Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={openManage}><SlidersHorizontal className="mr-2 h-4 w-4" />Campos personalizados</Button>
+          <Button onClick={() => open(null)}><Plus className="mr-2 h-4 w-4" />Novo cliente</Button>
+        </div>
       </div>
       <Input className="mt-4 max-w-sm" placeholder="Buscar por nome, WhatsApp, CPF ou e-mail" value={q} onChange={(e) => setQ(e.target.value)} />
       <div className="mt-4 overflow-x-auto rounded-2xl bg-card shadow-card">
@@ -126,10 +157,39 @@ function Clientes() {
             <label className="text-sm">Data de nascimento<Input type="date" value={f.birth_date} onChange={set("birth_date")} /></label>
             <label className="text-sm sm:col-span-2">Endereço<Input value={f.address} onChange={set("address")} /></label>
             <label className="text-sm sm:col-span-2">Observações<Textarea rows={3} value={f.notes} onChange={set("notes")} placeholder="Preferências, alergias, histórico…" /></label>
+            {fields.map((x) => (
+              <label key={x.id} className="text-sm">{x.label}
+                <Input type={x.type === "number" ? "number" : x.type === "date" ? "date" : "text"} value={extra[x.id] ?? ""} onChange={(e) => setExtra({ ...extra, [x.id]: e.target.value })} />
+              </label>
+            ))}
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEditing(null)}>Cancelar</Button>
             <Button disabled={saving} onClick={save}>{saving ? "Salvando…" : "Salvar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={manage} onOpenChange={setManage}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Campos personalizados</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Crie os campos que fazem sentido para o seu negócio. Eles aparecem no cadastro de todos os clientes.</p>
+          <div className="space-y-2">
+            {draft.length === 0 && <p className="text-sm text-muted-foreground">Nenhum campo criado ainda.</p>}
+            {draft.map((x, i) => (
+              <div key={x.id} className="flex gap-2">
+                <Input placeholder="Nome do campo (ex.: Alergias)" value={x.label} onChange={(e) => setDraft(draft.map((d, j) => (j === i ? { ...d, label: e.target.value } : d)))} />
+                <select className="rounded-md border bg-background px-2 text-sm" aria-label="Tipo do campo" value={x.type} onChange={(e) => setDraft(draft.map((d, j) => (j === i ? { ...d, type: e.target.value as Field["type"] } : d)))}>
+                  {(Object.keys(TYPE_LABEL) as Field["type"][]).map((t) => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
+                </select>
+                <Button size="icon" variant="ghost" aria-label="Remover campo" onClick={() => setDraft(draft.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
+              </div>
+            ))}
+            <Button variant="secondary" onClick={() => setDraft([...draft, { id: `c_${Math.random().toString(36).slice(2, 8)}`, label: "", type: "text" }])}><Plus className="mr-2 h-4 w-4" />Adicionar campo</Button>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setManage(false)}>Cancelar</Button>
+            <Button onClick={saveFields}>Salvar campos</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
