@@ -3,6 +3,8 @@ import { z } from "zod";
 import { getSupabaseAdmin } from "./supabaseAdmin";
 import { HOLD_MINUTES, activeHoldFilter } from "./booking";
 import { getEntitlements, getUsage } from "./plans.core";
+import { siteUrl, toWaNumber, firstName } from "./manage.core";
+import { uazapi } from "./uazapi";
 
 // Profissionais ativos do negócio. Sem a tabela (SQL ainda não rodado) ou sem nenhum, a agenda vale para o negócio todo.
 async function activePros(admin: ReturnType<typeof getSupabaseAdmin>, businessId: string) {
@@ -248,6 +250,25 @@ export const getBookingStatus = createServerFn({ method: "POST" })
     return { status: a.status as string, paid: a.deposit_paid === true, expired, manageToken: (a.manage_token as string | null) ?? null };
   });
 
+// Depois da falta, convida o cliente a remarcar pelo WhatsApp conectado do negócio. Falha aqui nunca atrapalha marcar a falta.
+async function sendNoShowNudge(admin: ReturnType<typeof getSupabaseAdmin>, appt: { business_id: string; customers?: { name?: string | null; whatsapp?: unknown } | null; businesses?: { slug?: string | null; name?: string | null } | null }) {
+  try {
+    const number = toWaNumber(appt.customers?.whatsapp);
+    if (!number) return false;
+    const { data: conn } = await admin.from("whatsapp_connections").select("instance_token").eq("business_id", appt.business_id).maybeSingle();
+    if (!conn?.instance_token) return false;
+    const { data: b } = await admin.from("businesses").select("name,slug,settings").eq("id", appt.business_id).maybeSingle();
+    if (!b) return false;
+    const link = `${siteUrl()}/agendar/${b.slug}`;
+    const custom = ((b.settings ?? {}) as { noshow?: { enabled?: boolean; message?: string } }).noshow;
+    if (custom?.enabled === false) return false;
+    const base = custom?.message?.trim() || "Olá, {nome}! Sentimos sua falta no seu horário na {negocio}. 😕 Sem problema, a gente remarca: escolha um novo horário aqui {link}";
+    const text = base.replace(/\{nome\}/gi, firstName(appt.customers?.name)).replace(/\{negocio\}/gi, b.name).replace(/\{link\}/gi, link) + (/\{link\}/i.test(base) ? "" : ` ${link}`);
+    const r = await uazapi("/send/text", { token: conn.instance_token, body: { number, text } });
+    return r.ok;
+  } catch { return false; }
+}
+
 // Marca falta. Se o sinal já foi pago na reserva, não há nova cobrança.
 export const chargeNoShow = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ appointmentId: z.string().uuid(), accessToken: z.string() }).parse(i))
@@ -261,17 +282,20 @@ export const chargeNoShow = createServerFn({ method: "POST" })
       .eq("id", data.appointmentId).single();
     if (!appt || appt.businesses?.owner_id !== u.user.id) throw new Error("Sem permissão");
 
+    const wasNoShow = appt.status === "no_show";
     await admin.from("appointments").update({ status: "no_show" }).eq("id", appt.id);
+    const nudged = wasNoShow ? false : await sendNoShowNudge(admin, appt);
+    const note = nudged ? " Mensagem de reagendamento enviada ao cliente." : "";
     const c = appt.customers;
-    if (appt.deposit_paid) return { ok: true, message: "Falta marcada. O sinal já estava pago." };
+    if (appt.deposit_paid) return { ok: true, message: `Falta marcada. O sinal já estava pago.${note}` };
     // Reserva do fluxo novo que não chegou a pagar o sinal: não existe autorização Pix para cobrar.
-    if (!c?.pix_auth_id) return { ok: true, message: "Falta marcada. O sinal desta reserva não foi pago, então não há o que cobrar." };
+    if (!c?.pix_auth_id) return { ok: true, message: `Falta marcada. O sinal desta reserva não foi pago, então não há o que cobrar.${note}` };
 
     const value = Number(appt.services?.deposit_value ?? 30);
     const apiKey = appt.businesses?.asaas_api_key || process.env["ASAAS_API_KEY"];
     if (!apiKey || !c?.asaas_customer_id) {
       await admin.from("payments").insert({ business_id: appt.business_id, appointment_id: appt.id, customer_id: c?.id, value, status: "failed" });
-      return { ok: false, message: "Falta marcada, mas o cliente não tem autorização Pix ativa." };
+      return { ok: false, message: `Falta marcada, mas o cliente não tem autorização Pix ativa.${note}` };
     }
     try {
       const due = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
@@ -281,7 +305,7 @@ export const chargeNoShow = createServerFn({ method: "POST" })
       });
       await admin.from("appointments").update({ asaas_payment_id: p.id }).eq("id", appt.id);
       await admin.from("payments").insert({ business_id: appt.business_id, appointment_id: appt.id, customer_id: c.id, asaas_payment_id: p.id, value, status: "pending" });
-      return { ok: true, message: "Falta marcada e cobrança criada." };
+      return { ok: true, message: `Falta marcada e cobrança criada.${note}` };
     } catch (e) {
       await admin.from("payments").insert({ business_id: appt.business_id, appointment_id: appt.id, customer_id: c.id, value, status: "failed" });
       return { ok: false, message: (e as Error).message };
