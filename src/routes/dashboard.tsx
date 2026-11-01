@@ -11,9 +11,12 @@ export const Route = createFileRoute("/dashboard")({
 
 type Row = { id: string; start_at: string; status: string; deposit_paid: boolean; customers: { name: string; whatsapp: string } | null; services: { name: string; price: number; deposit_value: number } | null };
 
+type MRow = { status: string; customer_confirmed_at?: string | null; deposit_paid: boolean; services: { price: number } | null };
+
 function Dashboard() {
   const { business } = useBiz();
   const [rows, setRows] = useState<Row[]>([]);
+  const [month, setMonth] = useState<MRow[] | null>(null);
   const [stats, setStats] = useState({ today: 0, pending: 0, noShow: 0, deposits: 0 });
 
   useEffect(() => {
@@ -28,6 +31,12 @@ function Dashboard() {
         supabase.from("appointments").select("id", { count: "exact", head: true }).eq("business_id", business.id).eq("status", "no_show").gte("start_at", m.toISOString()),
         supabase.from("appointments").select("services(deposit_value)").eq("business_id", business.id).eq("deposit_paid", true).gte("start_at", m.toISOString()),
       ]);
+      // customer_confirmed_at só existe depois do SQL dos lembretes: sem ele, cai na consulta sem a coluna.
+      const mEnd = new Date(m.getFullYear(), m.getMonth() + 1, 1);
+      const q = (cols: string) => supabase.from("appointments").select(cols).eq("business_id", business.id).gte("start_at", m.toISOString()).lt("start_at", mEnd.toISOString());
+      let mres = await q("status,customer_confirmed_at,deposit_paid,services(price)");
+      if (mres.error) mres = await q("status,deposit_paid,services(price)");
+      setMonth((mres.data as unknown as MRow[]) ?? []);
       const list = (today as unknown as Row[]) ?? [];
       setRows(list);
       const deposits = ((paid as unknown as { services: { deposit_value: number } | null }[]) ?? []).reduce((a, r) => a + Number(r.services?.deposit_value ?? 0), 0);
@@ -68,6 +77,37 @@ function Dashboard() {
           </div>
         ))}
       </div>
+      {month && (() => {
+        const price = (r: MRow) => Number(r.services?.price ?? 0);
+        const showed = month.filter((r) => r.status === "showed");
+        const noShow = month.filter((r) => r.status === "no_show");
+        const canceled = month.filter((r) => r.status === "canceled");
+        const confirmedShowed = showed.filter((r) => r.customer_confirmed_at);
+        const decided = showed.length + noShow.length;
+        const rate = decided > 0 ? Math.round((showed.length / decided) * 100) : null;
+        const avoided = confirmedShowed.length + canceled.length;
+        const avoidedValue = [...confirmedShowed, ...canceled].reduce((a, r) => a + price(r), 0);
+        const lost = noShow.reduce((a, r) => a + price(r), 0);
+        const items = [
+          { l: "Faltas evitadas", v: String(avoided), sub: `≈ ${brl(avoidedValue)} protegidos`, hi: true },
+          { l: "Confirmaram pelo WhatsApp e vieram", v: String(confirmedShowed.length), sub: "responderam 1 ao lembrete" },
+          { l: "Cancelaram antes", v: String(canceled.length), sub: "horário liberado para outro cliente" },
+          { l: "Taxa de comparecimento", v: rate === null ? "—" : `${rate}%`, sub: `${showed.length} vieram · ${noShow.length} faltaram` },
+          { l: "Perdido com faltas", v: brl(lost), sub: `${noShow.length} ${noShow.length === 1 ? "falta" : "faltas"} no mês` },
+        ];
+        return (<>
+          <h2 className="mt-10 text-xl font-semibold">Faltas evitadas no mês</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Estimativa: soma quem confirmou pelo lembrete e compareceu com quem cancelou antes, liberando o horário. Valores pelo preço do serviço.</p>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {items.map((c) => (
+              <div key={c.l} className={`rounded-2xl p-5 shadow-card ${c.hi ? "bg-ink text-ink-foreground" : "bg-card"}`}>
+                <p className="text-sm opacity-70">{c.l}</p><p className="mt-2 font-display text-2xl font-bold">{c.v}</p>
+                <p className="mt-1 text-xs opacity-70">{c.sub}</p>
+              </div>
+            ))}
+          </div>
+        </>);
+      })()}
       <h2 className="mt-10 text-xl font-semibold">Valores de hoje</h2>
       <p className="mt-1 text-sm text-muted-foreground">Preço dos serviços agendados para hoje. O total considera confirmações e desconta as faltas; cancelados ficam de fora.</p>
       <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
