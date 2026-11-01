@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { UserRound } from "lucide-react";
+import { Pencil, Trash2, UserRound } from "lucide-react";
 import { useBiz } from "@/components/AppShell";
 import { supabase } from "@/lib/supabaseClient";
-import { addProfessional, setProfessionalActive } from "@/lib/professionals.functions";
+import { addProfessional, deleteProfessional, setProfessionalActive } from "@/lib/professionals.functions";
 import { getPlanInfo } from "@/lib/plans.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,8 @@ export function ProfessionalsManager() {
   const [planName, setPlanName] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
 
   const load = useCallback(async () => {
     const { data, error } = await supabase.from("professionals").select("id,name,active").eq("business_id", business.id).order("created_at");
@@ -51,12 +53,20 @@ export function ProfessionalsManager() {
     toast.success("Profissional adicionado");
   });
   const toggle = (p: Pro, active: boolean) => run(async () => { await setProfessionalActive({ data: { accessToken: await token(), id: p.id, active } }); });
-  const rename = async (p: Pro, value: string) => {
-    const v = value.trim();
-    if (v === p.name) return;
-    if (v.length < 2) { toast.error("Informe o nome do profissional"); load(); return; }
-    const { error } = await supabase.from("professionals").update({ name: v }).eq("id", p.id);
-    if (error) toast.error(error.message); else { toast.success("Nome atualizado"); load(); }
+  const saveEdit = async (p: Pro) => {
+    const v = editName.trim();
+    if (v.length < 2) { toast.error("Informe o nome do profissional"); return; }
+    if (v !== p.name) {
+      const { error } = await supabase.from("professionals").update({ name: v }).eq("id", p.id);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Nome atualizado");
+    }
+    setEditId(null);
+    load();
+  };
+  const remove = (p: Pro) => {
+    if (!window.confirm(`Excluir o profissional "${p.name}"? Os agendamentos antigos continuam no histórico, sem o nome dele.`)) return;
+    run(async () => { await deleteProfessional({ data: { accessToken: await token(), id: p.id } }); toast.success("Profissional excluído"); });
   };
 
   const active = (rows ?? []).filter((r) => r.active).length;
@@ -73,10 +83,22 @@ export function ProfessionalsManager() {
         <>
           <div className="mt-4 divide-y">
             {rows.map((p) => (
-              <div key={p.id} className="flex items-center gap-3 py-3">
-                <Input className="max-w-xs" defaultValue={p.name} aria-label="Nome do profissional" onBlur={(e) => rename(p, e.target.value)} />
-                <span className="text-xs text-muted-foreground">{p.active ? "Ativo" : "Inativo"}</span>
-                <Switch checked={p.active} disabled={busy} onCheckedChange={(v) => toggle(p, v)} aria-label="Profissional ativo" />
+              <div key={p.id} className="flex flex-wrap items-center gap-3 py-3">
+                {editId === p.id ? (
+                  <>
+                    <Input className="max-w-xs" autoFocus value={editName} aria-label="Nome do profissional" onChange={(e) => setEditName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") saveEdit(p); }} />
+                    <Button size="sm" onClick={() => saveEdit(p)}>Salvar</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditId(null)}>Cancelar</Button>
+                  </>
+                ) : (
+                  <>
+                    <span className="min-w-0 flex-1 truncate font-medium">{p.name}</span>
+                    <span className="text-xs text-muted-foreground">{p.active ? "Ativo" : "Inativo"}</span>
+                    <Switch checked={p.active} disabled={busy} onCheckedChange={(v) => toggle(p, v)} aria-label="Profissional ativo" />
+                    <Button size="icon" variant="ghost" aria-label="Editar profissional" onClick={() => { setEditId(p.id); setEditName(p.name); }}><Pencil className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" aria-label="Excluir profissional" disabled={busy} onClick={() => remove(p)}><Trash2 className="h-4 w-4" /></Button>
+                  </>
+                )}
               </div>
             ))}
           </div>

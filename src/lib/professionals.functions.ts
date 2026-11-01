@@ -43,3 +43,20 @@ export const setProfessionalActive = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const deleteProfessional = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ accessToken: z.string(), id: z.string().uuid() }).parse(i))
+  .handler(async ({ data }) => {
+    const { admin, businessId } = await ownerBusiness(data.accessToken);
+    const { data: p } = await admin.from("professionals").select("id,active").eq("id", data.id).eq("business_id", businessId).maybeSingle();
+    if (!p) throw new Error("Profissional não encontrado");
+    const usage = await getUsage(admin, businessId);
+    if (p.active && usage.professionals <= 1) throw new Error("Mantenha pelo menos um profissional ativo. Adicione outro antes de excluir este.");
+    const nowIso = new Date().toISOString().slice(0, 19);
+    const { count } = await admin.from("appointments").select("id", { count: "exact", head: true })
+      .eq("professional_id", data.id).in("status", ["pending", "confirmed"]).gte("start_at", nowIso);
+    if ((count ?? 0) > 0) throw new Error(`Este profissional tem ${count} agendamento(s) futuro(s). Cancele ou remarque antes de excluir, ou apenas desative.`);
+    const { error } = await admin.from("professionals").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
