@@ -12,6 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { BrandImages } from "@/components/BrandImages";
 import { WhatsAppConnect } from "@/components/WhatsAppConnect";
 import { BirthdaySettings } from "@/components/BirthdaySettings";
+import { PlanBilling } from "@/components/PlanBilling";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/config")({
   head: () => ({ meta: [{ title: "Configurações — ConfirmaZap" }, { name: "description", content: "Serviços, regras e integrações." }, { property: "og:title", content: "Configurações — ConfirmaZap" }, { property: "og:description", content: "Serviços, regras e integrações." }] }),
@@ -27,7 +29,7 @@ function Config() {
   const [editId, setEditId] = useState<string | null>(null);
   const [ed, setEd] = useState({ name: "", duration: "", price: "", deposit: "" });
   const s0 = (business.settings ?? {}) as Settings;
-  const [biz, setBiz] = useState({ name: business.name, whatsapp: business.whatsapp ?? "", asaas: business.asaas_api_key ?? "", cancel: String(s0.cancel_hours ?? 4), email: business.email ?? "", phone: maskWhatsapp(business.phone ?? ""), doc: maskDocument(business.document ?? "") });
+  const [biz, setBiz] = useState({ name: business.name, whatsapp: business.whatsapp ?? "", cancel: String(s0.cancel_hours ?? 4), email: business.email ?? "", phone: maskWhatsapp(business.phone ?? ""), doc: maskDocument(business.document ?? "") });
 
   const load = () => supabase.from("services").select("*").eq("business_id", business.id).order("name").then(({ data }) => setServices((data as Service[]) ?? []));
   useEffect(() => { load(); }, [business.id]);
@@ -66,7 +68,7 @@ function Config() {
     if (!isValidPhone(biz.phone)) { toast.error("Informe o telefone com DDD"); return; }
     if (!isValidDocument(biz.doc)) { toast.error("CPF ou CNPJ inválido. Confira os números."); return; }
     const settings = { ...s0, cancel_hours: Number(biz.cancel) };
-    const { error } = await supabase.from("businesses").update({ name: biz.name.trim(), email: biz.email.trim(), phone: onlyDigits(biz.phone), document: onlyDigits(biz.doc), whatsapp: biz.whatsapp, asaas_api_key: biz.asaas || null, settings }).eq("id", business.id);
+    const { error } = await supabase.from("businesses").update({ name: biz.name.trim(), email: biz.email.trim(), phone: onlyDigits(biz.phone), document: onlyDigits(biz.doc), whatsapp: biz.whatsapp, settings }).eq("id", business.id);
     if (error) toast.error(error.message); else { toast.success("Salvo"); reload(); }
   };
 
@@ -75,6 +77,33 @@ function Config() {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Configurações</h1>
 
+      <Tabs defaultValue="negocio">
+        <TabsList className="h-auto w-full justify-start overflow-x-auto">
+          <TabsTrigger value="negocio">Negócio e regras</TabsTrigger>
+          <TabsTrigger value="servicos">Serviços</TabsTrigger>
+          <TabsTrigger value="identidade">Identidade visual</TabsTrigger>
+          <TabsTrigger value="plano">Plano (financeiro)</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="negocio" className="mt-6 space-y-6">
+      <section className={`${card} grid gap-3 sm:grid-cols-2`}>
+        <h2 className="text-lg font-semibold sm:col-span-2">Negócio e regras</h2>
+        <label className="text-sm">Nome<Input value={biz.name} onChange={(e) => setBiz({ ...biz, name: e.target.value })} /></label>
+        <label className="text-sm">E-mail<Input type="email" value={biz.email} onChange={(e) => setBiz({ ...biz, email: e.target.value })} /></label>
+        <label className="text-sm">Telefone<Input inputMode="tel" value={biz.phone} onChange={(e) => setBiz({ ...biz, phone: maskWhatsapp(e.target.value) })} /></label>
+        <label className="text-sm">CPF ou CNPJ<Input inputMode="numeric" value={biz.doc} onChange={(e) => setBiz({ ...biz, doc: maskDocument(e.target.value) })} /></label>
+        <label className="text-sm">WhatsApp<Input value={biz.whatsapp} onChange={(e) => setBiz({ ...biz, whatsapp: e.target.value })} /></label>
+        <label className="text-sm">Cancelamento grátis até (horas antes)<Input type="number" value={biz.cancel} onChange={(e) => setBiz({ ...biz, cancel: e.target.value })} /></label>
+      </section>
+
+          <WhatsAppConnect />
+
+          <BirthdaySettings />
+
+          <Button size="lg" onClick={saveBiz}>Salvar configurações</Button>
+        </TabsContent>
+
+        <TabsContent value="servicos" className="mt-6 space-y-6">
       <section className={card}>
         <h2 className="text-lg font-semibold">Serviços</h2>
         <p className="mt-1 text-sm text-muted-foreground">O sinal é o valor que o cliente paga por Pix na hora de agendar para confirmar o horário. Mudanças valem para as próximas reservas.</p>
@@ -108,25 +137,16 @@ function Config() {
         </div>
         <Button className="mt-3" disabled={!n.name || !n.price} onClick={add}>Adicionar serviço</Button>
       </section>
+        </TabsContent>
 
-      <BrandImages />
+        <TabsContent value="identidade" className="mt-6">
+          <BrandImages />
+        </TabsContent>
 
-      <section className={`${card} grid gap-3 sm:grid-cols-2`}>
-        <h2 className="text-lg font-semibold sm:col-span-2">Negócio e regras</h2>
-        <label className="text-sm">Nome<Input value={biz.name} onChange={(e) => setBiz({ ...biz, name: e.target.value })} /></label>
-        <label className="text-sm">E-mail<Input type="email" value={biz.email} onChange={(e) => setBiz({ ...biz, email: e.target.value })} /></label>
-        <label className="text-sm">Telefone<Input inputMode="tel" value={biz.phone} onChange={(e) => setBiz({ ...biz, phone: maskWhatsapp(e.target.value) })} /></label>
-        <label className="text-sm">CPF ou CNPJ<Input inputMode="numeric" value={biz.doc} onChange={(e) => setBiz({ ...biz, doc: maskDocument(e.target.value) })} /></label>
-        <label className="text-sm">WhatsApp<Input value={biz.whatsapp} onChange={(e) => setBiz({ ...biz, whatsapp: e.target.value })} /></label>
-        <label className="text-sm">Cancelamento grátis até (horas antes)<Input type="number" value={biz.cancel} onChange={(e) => setBiz({ ...biz, cancel: e.target.value })} /></label>
-        <label className="text-sm">Chave de API do Asaas<Input type="password" value={biz.asaas} onChange={(e) => setBiz({ ...biz, asaas: e.target.value })} /></label>
-      </section>
-
-      <WhatsAppConnect />
-
-      <BirthdaySettings />
-
-      <Button size="lg" onClick={saveBiz}>Salvar configurações</Button>
+        <TabsContent value="plano" className="mt-6">
+          <PlanBilling />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
