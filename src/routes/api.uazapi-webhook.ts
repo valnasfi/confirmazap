@@ -31,7 +31,8 @@ async function handle(body: any) {
   const content = m?.content;
   const raw = pick(m?.text, typeof content === "string" ? content : undefined, content?.text, content?.conversation) ?? "";
   const answer = raw.replace(/[^\p{L}\p{N}]/gu, "").trim();
-  if (answer !== "1" && answer !== "2") return { status: 200 };
+  const isOptOut = answer.toUpperCase() === "SAIR";
+  if (answer !== "1" && answer !== "2" && !isOptOut) return { status: 200 };
 
   // Quem escreveu: sender_pn traz o telefone mesmo quando o chat vem como @lid.
   const chat = pick(m?.chatid);
@@ -42,6 +43,13 @@ async function handle(body: any) {
   const businessId: string = conn.business_id;
   const { data: customers } = await admin.from("customers").select("id,name").eq("business_id", businessId).in("whatsapp", localCandidates(wa));
   if (!customers?.length) return { status: 200 };
+
+  // SAIR: o cliente não quer mais mensagens de aniversário e de "sentimos sua falta". Lembretes do próprio horário continuam.
+  if (isOptOut) {
+    await admin.from("customers").update({ marketing_opt_out: true }).in("id", customers.map((c) => c.id));
+    try { await uazapi("/send/text", { token, body: { number: wa, text: "Pronto! Você não vai mais receber mensagens promocionais. Os lembretes dos seus horários continuam normalmente." } }); } catch { /* sem resposta não é crítico */ }
+    return { status: 200 };
+  }
 
   // Próximo horário confirmado que já recebeu lembrete.
   const { data: appts } = await admin

@@ -8,3 +8,14 @@ export function renderBirthday(template: string, fullName: string | null, busine
   const cap = first.charAt(0).toLocaleUpperCase("pt-BR") + first.slice(1).toLocaleLowerCase("pt-BR");
   return template.replace(/\{nome\}/gi, cap).replace(/\{negocio\}/gi, businessName);
 }
+
+// Reativação de clientes que sumiram (settings.reactivation). {link} leva à página de agendamento.
+export const DEFAULT_REACTIVATION_MESSAGE = "Olá, {nome}! Sentimos sua falta na {negocio}. 😊 Que tal marcar um novo horário? {link}";
+export const OPT_OUT_LINE = "Para não receber mais mensagens como esta, responda SAIR.";
+export type ReactivationSettings = { enabled?: boolean; days?: number; message?: string };
+
+export function renderReactivation(template: string, fullName: string | null, businessName: string, link: string) {
+  const base = renderBirthday(template, fullName, businessName).replace(/\{link\}/gi, link);
+  const withLink = /\{link\}/i.test(template) ? base : `${base} ${link}`;
+  return /\bSAIR\b/.test(withLink) ? withLink : `${withLink}\n\n${OPT_OUT_LINE}`;
+}

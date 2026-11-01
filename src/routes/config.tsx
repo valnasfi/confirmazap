@@ -13,6 +13,7 @@ import { BrandImages } from "@/components/BrandImages";
 import { WhatsAppConnect } from "@/components/WhatsAppConnect";
 import { BirthdaySettings } from "@/components/BirthdaySettings";
 import { RemindersSettings } from "@/components/RemindersSettings";
+import { ReactivationSettings } from "@/components/ReactivationSettings";
 import { PlanBilling } from "@/components/PlanBilling";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -102,6 +103,8 @@ function Config() {
           <RemindersSettings />
 
           <BirthdaySettings />
+
+          <ReactivationSettings />
 
           <Button size="lg" onClick={saveBiz}>Salvar configurações</Button>
         </TabsContent>

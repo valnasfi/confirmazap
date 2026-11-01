@@ -29,8 +29,12 @@ async function run() {
     const { data: conn } = await admin.from("whatsapp_connections").select("instance_token").eq("business_id", b.id).maybeSingle();
     if (!conn) continue; // WhatsApp ainda não conectado
 
-    const { data: customers } = await admin.from("customers").select("id,name,whatsapp,birth_date").eq("business_id", b.id).not("birth_date", "is", null);
-    const today = (customers ?? []).filter((c) => {
+    // marketing_opt_out só existe depois do SQL da reativação: sem a coluna, ninguém está bloqueado.
+    let cr = await admin.from("customers").select("id,name,whatsapp,birth_date,marketing_opt_out").eq("business_id", b.id).not("birth_date", "is", null);
+    if (cr.error) cr = (await admin.from("customers").select("id,name,whatsapp,birth_date").eq("business_id", b.id).not("birth_date", "is", null)) as typeof cr;
+    const customers = (cr.data ?? []) as Array<{ id: string; name: string | null; whatsapp: string; birth_date: string; marketing_opt_out?: boolean | null }>;
+    const today = customers.filter((c) => {
+      if (c.marketing_opt_out) return false;
       const [, m, d] = String(c.birth_date).split("-").map(Number);
       return m === month && d === day;
     });
