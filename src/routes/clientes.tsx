@@ -42,6 +42,11 @@ function cpfOk(v: string) {
 const maskCpf = (v: string) => onlyDigits(v).slice(0, 11).replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
 
 const BASIC = "id,name,whatsapp,cpf,consent_at";
+// Data "AAAA-MM-DD" do banco → dd/mm/aaaa, sem passar por fuso horário.
+const fmtBirth = (d: string | null | undefined) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d ?? "");
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : "—";
+};
 const FIELDS = "id,name,whatsapp,cpf,email,birth_date,address,notes,consent_at";
 const SEX_OPTIONS = ["Feminino", "Masculino", "Outro", "Prefere não informar"];
 
@@ -119,7 +124,7 @@ function Clientes() {
 
   const term = q.trim().toLowerCase();
   const digits = onlyDigits(q);
-  const shown = rows.filter((r) => !term || (r.name ?? "").toLowerCase().includes(term) || (digits && (r.whatsapp.includes(digits) || (r.cpf ?? "").includes(digits))) || (r.email ?? "").toLowerCase().includes(term));
+  const shown = rows.filter((r) => !term || (r.name ?? "").toLowerCase().includes(term) || (digits && r.whatsapp.includes(digits)) || (r.email ?? "").toLowerCase().includes(term));
   const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
 
   return (
@@ -131,10 +136,10 @@ function Clientes() {
           <Button onClick={() => open(null)}><Plus className="mr-2 h-4 w-4" />Novo cliente</Button>
         </div>
       </div>
-      <Input className="mt-4 max-w-sm" placeholder="Buscar por nome, WhatsApp, CPF ou e-mail" value={q} onChange={(e) => setQ(e.target.value)} />
+      <Input className="mt-4 max-w-sm" placeholder="Buscar por nome, WhatsApp ou e-mail" value={q} onChange={(e) => setQ(e.target.value)} />
       <div className="mt-4 overflow-x-auto rounded-2xl bg-card shadow-card">
         <table className="w-full text-sm">
-          <thead className="text-left text-muted-foreground"><tr><th className="p-4">Nome</th><th>WhatsApp</th><th>E-mail</th><th>CPF</th><th /></tr></thead>
+          <thead className="text-left text-muted-foreground"><tr><th className="p-4">Nome</th><th>WhatsApp</th><th>E-mail</th><th>Nascimento</th><th /></tr></thead>
           <tbody className="divide-y">
             {shown.length === 0 && <tr><td className="p-4 text-muted-foreground" colSpan={5}>{rows.length === 0 ? "Nenhum cliente ainda." : "Nenhum cliente encontrado."}</td></tr>}
             {shown.map((r) => (
@@ -142,7 +147,7 @@ function Clientes() {
                 <td className="p-4 font-medium">{r.name || "—"}</td>
                 <td>{maskWhatsapp(r.whatsapp)}</td>
                 <td>{r.email || "—"}</td>
-                <td>{r.cpf ? maskCpf(r.cpf) : "—"}</td>
+                <td>{fmtBirth(r.birth_date)}</td>
                 <td className="pr-3 text-right"><Button size="icon" variant="ghost" aria-label="Editar cliente" onClick={() => open(r)}><Pencil className="h-4 w-4" /></Button></td>
               </tr>
             ))}
