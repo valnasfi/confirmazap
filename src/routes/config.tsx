@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { BrandImages } from "@/components/BrandImages";
 import { WhatsAppConnect } from "@/components/WhatsAppConnect";
+import { BirthdaySettings } from "@/components/BirthdaySettings";
 
 export const Route = createFileRoute("/config")({
   head: () => ({ meta: [{ title: "Configurações — ConfirmaZap" }, { name: "description", content: "Serviços, regras e integrações." }, { property: "og:title", content: "Configurações — ConfirmaZap" }, { property: "og:description", content: "Serviços, regras e integrações." }] }),
@@ -122,6 +123,8 @@ function Config() {
       </section>
 
       <WhatsAppConnect />
+
+      <BirthdaySettings />
 
       <Button size="lg" onClick={saveBiz}>Salvar configurações</Button>
     </div>

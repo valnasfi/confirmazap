@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as ApiAsaasWebhookRouteImport } from './routes/api.asaas-webhook'
+import { Route as ApiCronBirthdaysRouteImport } from './routes/api.cron.birthdays'
 import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as CobrancasRouteImport } from './routes/cobrancas'
 import { Route as ConfigRouteImport } from './routes/config'
@@ -38,6 +39,11 @@ const AgendaRoute = AgendaRouteImport.update({
 const ApiAsaasWebhookRoute = ApiAsaasWebhookRouteImport.update({
   id: '/api/asaas-webhook',
   path: '/api/asaas-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCronBirthdaysRoute = ApiCronBirthdaysRouteImport.update({
+  id: '/api/cron/birthdays',
+  path: '/api/cron/birthdays',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientesRoute = ClientesRouteImport.update({
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/agenda': typeof AgendaRoute
   '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
+  '/api/cron/birthdays': typeof ApiCronBirthdaysRoute
   '/clientes': typeof ClientesRoute
   '/cobrancas': typeof CobrancasRoute
   '/config': typeof ConfigRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/agenda': typeof AgendaRoute
   '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
+  '/api/cron/birthdays': typeof ApiCronBirthdaysRoute
   '/clientes': typeof ClientesRoute
   '/cobrancas': typeof CobrancasRoute
   '/config': typeof ConfigRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/agenda': typeof AgendaRoute
   '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
+  '/api/cron/birthdays': typeof ApiCronBirthdaysRoute
   '/clientes': typeof ClientesRoute
   '/cobrancas': typeof CobrancasRoute
   '/config': typeof ConfigRoute
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agenda'
     | '/api/asaas-webhook'
+    | '/api/cron/birthdays'
     | '/clientes'
     | '/cobrancas'
     | '/config'
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agenda'
     | '/api/asaas-webhook'
+    | '/api/cron/birthdays'
     | '/clientes'
     | '/cobrancas'
     | '/config'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agenda'
     | '/api/asaas-webhook'
+    | '/api/cron/birthdays'
     | '/clientes'
     | '/cobrancas'
     | '/config'
@@ -152,6 +164,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AgendaRoute: typeof AgendaRoute
   ApiAsaasWebhookRoute: typeof ApiAsaasWebhookRoute
+  ApiCronBirthdaysRoute: typeof ApiCronBirthdaysRoute
   ClientesRoute: typeof ClientesRoute
   CobrancasRoute: typeof CobrancasRoute
   ConfigRoute: typeof ConfigRoute
@@ -188,6 +201,13 @@ declare module '@tanstack/react-router' {
       path: '/api/asaas-webhook'
       fullPath: '/api/asaas-webhook'
       preLoaderRoute: typeof ApiAsaasWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/birthdays': {
+      id: '/api/cron/birthdays'
+      path: '/api/cron/birthdays'
+      fullPath: '/api/cron/birthdays'
+      preLoaderRoute: typeof ApiCronBirthdaysRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clientes': {
@@ -240,6 +260,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AgendaRoute: AgendaRoute,
   ApiAsaasWebhookRoute: ApiAsaasWebhookRoute,
+  ApiCronBirthdaysRoute: ApiCronBirthdaysRoute,
   ClientesRoute: ClientesRoute,
   CobrancasRoute: CobrancasRoute,
   ConfigRoute: ConfigRoute,
