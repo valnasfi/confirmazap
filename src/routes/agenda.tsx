@@ -22,6 +22,7 @@ function Agenda() {
   const [items, setItems] = useState<Appt[]>([]);
   const [sel, setSel] = useState<Appt | null>(null);
   const [busy, setBusy] = useState(false);
+  const [activePros, setActivePros] = useState<string[]>([]);
 
   const load = async () => {
     // customer_confirmed_at só existe depois do SQL dos lembretes: sem ele, a agenda continua funcionando.
@@ -32,6 +33,11 @@ function Agenda() {
     setItems((r.data as unknown as Appt[]) ?? []);
   };
   useEffect(() => { load(); }, [business.id]);
+  // Profissionais ativos: com mais de um, a agenda mostra de quem é cada horário e libera o filtro.
+  useEffect(() => {
+    supabase.from("professionals").select("name").eq("business_id", business.id).eq("active", true).order("created_at")
+      .then(({ data, error }) => setActivePros(error ? [] : ((data ?? []) as Array<{ name: string }>).map((p) => p.name)));
+  }, [business.id]);
 
   const setStatus = async (status: string) => {
     if (!sel) return;
@@ -50,11 +56,11 @@ function Agenda() {
   };
 
   // Só mostra o nome do profissional e o filtro quando há mais de um.
-  const proNames = [...new Set(items.map((a) => a.professionals?.name).filter((n): n is string => Boolean(n)))].sort();
+  const proNames = [...new Set([...activePros, ...items.map((a) => a.professionals?.name).filter((n): n is string => Boolean(n))])].sort();
   const [proFilter, setProFilter] = useState("");
   const events = items.filter((a) => !proFilter || a.professionals?.name === proFilter).map((a) => ({
     id: a.id, start: asUtc(a.start_at), end: asUtc(a.end_at),
-    title: `${a.customers?.name ?? ""} · ${a.services?.name ?? ""}${proNames.length > 1 && a.professionals?.name ? ` (${a.professionals.name})` : ""}`,
+    title: `${proNames.length > 1 && a.professionals?.name ? `${a.professionals.name} — ` : ""}${a.customers?.name ?? ""} · ${a.services?.name ?? ""}`,
     backgroundColor: statusMeta[a.status]?.color, borderColor: statusMeta[a.status]?.color,
   }));
   const wa = sel?.customers?.whatsapp ? `https://wa.me/55${sel.customers.whatsapp}?text=${encodeURIComponent(`Olá ${sel.customers.name}! Lembrete do seu horário em ${business.name}: ${new Date(asUtc(sel.start_at)).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}.`)}` : "#";
