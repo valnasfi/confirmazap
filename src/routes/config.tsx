@@ -35,6 +35,26 @@ function Config() {
   const s0 = (business.settings ?? {}) as Settings;
   const [biz, setBiz] = useState({ name: business.name, whatsapp: business.whatsapp ?? "", cancel: String(s0.cancel_hours ?? 4), email: business.email ?? "", phone: maskWhatsapp(business.phone ?? ""), doc: maskDocument(business.document ?? "") });
 
+  const [pros, setPros] = useState<Array<{ id: string; name: string }>>([]);
+  const [links, setLinks] = useState<Record<string, string[]>>({});
+  const [edPros, setEdPros] = useState<string[]>([]);
+  const loadPros = async () => {
+    const { data, error } = await supabase.from("professionals").select("id,name").eq("business_id", business.id).eq("active", true).order("created_at");
+    if (error) return;
+    setPros((data as Array<{ id: string; name: string }>) ?? []);
+    const { data: ln, error: lErr } = await supabase.from("professional_services").select("professional_id,service_id");
+    if (lErr) return;
+    const m: Record<string, string[]> = {};
+    for (const r of (ln ?? []) as Array<{ professional_id: string; service_id: string }>) (m[r.service_id] ??= []).push(r.professional_id);
+    setLinks(m);
+  };
+  useEffect(() => { loadPros(); }, [business.id]);
+  const prosLabel = (id: string) => {
+    const ids = links[id];
+    if (!ids || !ids.length) return "Todos os profissionais";
+    return pros.filter((p) => ids.includes(p.id)).map((p) => p.name).join(", ") || "Todos os profissionais";
+  };
+
   const load = () => supabase.from("services").select("*").eq("business_id", business.id).order("name").then(({ data }) => setServices((data as Service[]) ?? []));
   useEffect(() => { load(); }, [business.id]);
 
@@ -52,6 +72,8 @@ function Config() {
   const startEdit = (s: Service) => {
     setEditId(s.id);
     setEd({ name: s.name, duration: String(s.duration_minutes), price: String(s.price), deposit: String(s.deposit_value ?? 0) });
+    const cur = links[s.id];
+    setEdPros(cur && cur.length ? cur : pros.map((p) => p.id));
   };
   const saveEdit = async () => {
     if (!editId) return;
@@ -64,9 +86,22 @@ function Config() {
     if (ed.deposit === "" || !Number.isFinite(deposit) || deposit < 0) { toast.error("Informe o sinal (use 0 para não cobrar sinal)"); return; }
     const { error } = await supabase.from("services").update({ name: ed.name.trim(), duration_minutes: duration, price, deposit_value: deposit }).eq("id", editId);
     if (error) { toast.error(error.message); return; }
+    if (pros.length > 0) {
+      // Todos marcados = sem vínculo (vale para todos, inclusive quem for adicionado depois).
+      const chosen = edPros.filter((id) => pros.some((p) => p.id === id));
+      if (chosen.length === 0) { toast.error("Marque pelo menos um profissional que faz este serviço"); return; }
+      const all = chosen.length === pros.length;
+      const { error: dErr } = await supabase.from("professional_services").delete().eq("service_id", editId);
+      if (dErr) { toast.error(/relation|schema cache|does not exist/i.test(dErr.message) ? "Rode o SQL de serviço por profissional no Supabase." : dErr.message); return; }
+      if (!all) {
+        const { error: iErr } = await supabase.from("professional_services").insert(chosen.map((pid) => ({ professional_id: pid, service_id: editId })));
+        if (iErr) { toast.error(iErr.message); return; }
+      }
+    }
     toast.success("Serviço atualizado");
     setEditId(null);
     load();
+    loadPros();
   };
 
   const saveBiz = async () => {
@@ -126,6 +161,19 @@ function Config() {
               <label className="text-xs text-muted-foreground">Minutos<Input className="mt-1 text-foreground" type="number" value={ed.duration} onChange={(e) => setEd({ ...ed, duration: e.target.value })} /></label>
               <label className="text-xs text-muted-foreground">Preço (R$)<Input className="mt-1 text-foreground" type="number" step="0.01" value={ed.price} onChange={(e) => setEd({ ...ed, price: e.target.value })} /></label>
               <label className="text-xs text-muted-foreground">Sinal (R$)<Input className="mt-1 text-foreground" type="number" step="0.01" value={ed.deposit} onChange={(e) => setEd({ ...ed, deposit: e.target.value })} /></label>
+              {pros.length > 1 && (
+                <div className="sm:col-span-5">
+                  <p className="text-xs text-muted-foreground">Quem faz este serviço</p>
+                  <div className="mt-1 flex flex-wrap gap-3">
+                    {pros.map((p) => (
+                      <label key={p.id} className="flex items-center gap-2 text-sm">
+                        <input type="checkbox" checked={edPros.includes(p.id)} onChange={(e) => setEdPros(e.target.checked ? [...edPros, p.id] : edPros.filter((x) => x !== p.id))} />
+                        {p.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="flex gap-2 sm:col-span-5">
                 <Button onClick={saveEdit}>Salvar</Button>
                 <Button variant="ghost" onClick={() => setEditId(null)}>Cancelar</Button>
@@ -135,6 +183,7 @@ function Config() {
             <div key={s.id} className="flex flex-wrap items-center gap-3 py-3">
               <span className="flex-1 font-medium">{s.name}</span>
               <span className="text-sm text-muted-foreground">{s.duration_minutes} min · {brl(s.price)} · sinal {brl(s.deposit_value)}</span>
+              {pros.length > 1 && <span className="w-full text-xs text-muted-foreground sm:w-auto">👤 {prosLabel(s.id)}</span>}
               <Switch checked={s.active} onCheckedChange={(v) => upd(s.id, { active: v })} />
               <Button size="icon" variant="ghost" aria-label="Editar serviço" onClick={() => startEdit(s)}><Pencil className="h-4 w-4" /></Button>
               <Button size="icon" variant="ghost" aria-label="Apagar serviço" onClick={() => del(s.id)}><Trash2 className="h-4 w-4" /></Button>

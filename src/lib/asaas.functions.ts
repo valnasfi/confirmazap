@@ -10,6 +10,16 @@ async function activePros(admin: ReturnType<typeof getSupabaseAdmin>, businessId
   return error ? [] : ((data ?? []) as Array<{ id: string; name: string }>);
 }
 
+// Profissionais que fazem o serviço: os marcados nele; sem nenhum marcado, todos os ativos.
+// Sem a tabela de vínculos (SQL ainda não rodado), vale todos.
+async function prosForService(admin: ReturnType<typeof getSupabaseAdmin>, pros: Array<{ id: string; name: string }>, serviceId?: string | null) {
+  if (!serviceId || pros.length === 0) return pros;
+  const { data, error } = await admin.from("professional_services").select("professional_id").eq("service_id", serviceId);
+  if (error || !data || data.length === 0) return pros;
+  const ids = new Set(data.map((r) => r.professional_id as string));
+  return pros.filter((p) => ids.has(p.id));
+}
+
 function asaasBase() {
   return process.env["ASAAS_ENV"] === "production"
     ? "https://api.asaas.com/v3"
@@ -40,10 +50,11 @@ function asUtc(value: unknown) {
 // Horários ocupados (público, só devolve horários). Reserva não paga fora do prazo não ocupa o horário.
 // Com professionalId: os horários desse profissional. Sem ele ("sem preferência"): só os horários em que TODOS estão ocupados.
 export const getBusySlots = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ businessId: z.string().uuid(), from: z.string(), to: z.string(), professionalId: z.string().uuid().nullish() }).parse(i))
+  .inputValidator((i: unknown) => z.object({ businessId: z.string().uuid(), from: z.string(), to: z.string(), professionalId: z.string().uuid().nullish(), serviceId: z.string().uuid().nullish() }).parse(i))
   .handler(async ({ data }) => {
     const admin = getSupabaseAdmin();
-    const pros = await activePros(admin, data.businessId);
+    const allPros = await activePros(admin, data.businessId);
+    const pros = await prosForService(admin, allPros, data.serviceId);
     const { data: rows } = await admin
       .from("appointments")
       .select("*")
@@ -53,7 +64,8 @@ export const getBusySlots = createServerFn({ method: "POST" })
       .gte("start_at", data.from)
       .lt("start_at", data.to);
     const all = (rows ?? []) as Array<{ start_at: unknown; professional_id?: string | null }>;
-    if (pros.length === 0) return all.map((r) => asUtc(r.start_at));
+    if (allPros.length === 0) return all.map((r) => asUtc(r.start_at));
+    if (pros.length === 0) return all.map((r) => asUtc(r.start_at)); // ninguém atende: tudo ocupado
     if (data.professionalId) return all.filter((r) => r.professional_id === data.professionalId).map((r) => asUtc(r.start_at));
     const busyBy = new Map<string, Set<string>>();
     for (const r of all) {
@@ -111,9 +123,11 @@ export const createBooking = createServerFn({ method: "POST" })
     if (Number.isNaN(start.getTime()) || start.getTime() < Date.now()) throw new Error("Horário inválido. Escolha outro.");
     const end = new Date(start.getTime() + svc.duration_minutes * 60000);
     // Quem atende: o profissional escolhido ou, sem preferência, o primeiro livre naquele horário.
-    const pros = await activePros(admin, biz.id);
-    if (data.professionalId && !pros.some((p) => p.id === data.professionalId)) throw new Error("Este profissional não está disponível. Escolha outro.");
-    const candidates = pros.length === 0 ? [null] : data.professionalId ? [data.professionalId] : pros.map((p) => p.id);
+    const allPros = await activePros(admin, biz.id);
+    const pros = await prosForService(admin, allPros, svc.id);
+    if (allPros.length > 0 && pros.length === 0) throw new Error("Nenhum profissional disponível para este serviço no momento.");
+    if (data.professionalId && !pros.some((p) => p.id === data.professionalId)) throw new Error("Este profissional não faz este serviço. Escolha outro.");
+    const candidates = allPros.length === 0 ? [null] : data.professionalId ? [data.professionalId] : pros.map((p) => p.id);
     let professionalId: string | null = null;
     let free = false;
     for (const cand of candidates) {

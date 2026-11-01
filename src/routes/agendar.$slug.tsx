@@ -25,6 +25,13 @@ function Booking() {
   const [pros, setPros] = useState<Pro[]>([]);
   // "any" = sem preferência; só aparece a escolha quando há mais de um profissional.
   const [pro, setPro] = useState<Pro | "any" | null>(null);
+  // serviço -> profissionais que o fazem (sem vínculo = todos)
+  const [links, setLinks] = useState<Record<string, string[]>>({});
+  const eligibleFor = (sv: Service | null) => {
+    const ids = sv ? links[sv.id] : undefined;
+    return ids && ids.length ? pros.filter((p) => ids.includes(p.id)) : pros;
+  };
+  const elig = eligibleFor(svc);
   const [day, setDay] = useState<Date | null>(null);
   const [busy, setBusy] = useState<string[]>([]);
   const [slot, setSlot] = useState<Date | null>(null);
@@ -51,6 +58,12 @@ function Booking() {
         const { data: p, error: pErr } = await supabase.from("professionals").select("id,name").eq("business_id", b.id).eq("active", true).order("created_at");
         const list = pErr ? [] : ((p as Pro[]) ?? []);
         setPros(list);
+        const { data: ln, error: lErr } = await supabase.from("professional_services").select("professional_id,service_id");
+        if (!lErr) {
+          const m: Record<string, string[]> = {};
+          for (const r of (ln ?? []) as Array<{ professional_id: string; service_id: string }>) (m[r.service_id] ??= []).push(r.professional_id);
+          setLinks(m);
+        }
         if (list.length === 1) setPro(list[0]!);
       }
     })();
@@ -65,8 +78,8 @@ function Booking() {
   useEffect(() => {
     if (!biz || !day) return;
     const to = new Date(day); to.setDate(to.getDate() + 1);
-    getBusySlots({ data: { businessId: biz.id, from: day.toISOString(), to: to.toISOString(), professionalId: pro && pro !== "any" ? pro.id : null } }).then(setBusy).catch(() => setBusy([]));
-  }, [biz, day, pro]);
+    getBusySlots({ data: { businessId: biz.id, from: day.toISOString(), to: to.toISOString(), professionalId: pro && pro !== "any" ? pro.id : null, serviceId: svc?.id ?? null } }).then(setBusy).catch(() => setBusy([]));
+  }, [biz, day, pro, svc]);
 
   // Depois de gerar o Pix, consulta o status até o pagamento ser identificado (ou o prazo acabar).
   useEffect(() => {
@@ -150,23 +163,24 @@ function Booking() {
             <div className="mt-3 grid gap-2">
               {services.length === 0 && <p className="text-sm text-muted-foreground">Nenhum serviço disponível.</p>}
               {services.map((s) => (
-                <button key={s.id} onClick={() => { setSvc(s); setSlot(null); }} className={`flex justify-between rounded-xl border p-3 text-left ${svc?.id === s.id ? "border-primary bg-secondary" : ""}`}>
+                <button key={s.id} onClick={() => { setSvc(s); setSlot(null); const e = eligibleFor(s); setPro(e.length === 1 ? e[0]! : null); }} className={`flex justify-between rounded-xl border p-3 text-left ${svc?.id === s.id ? "border-primary bg-secondary" : ""}`}>
                   <span><b>{s.name}</b><span className="block text-xs text-muted-foreground">{s.duration_minutes} min</span></span><span>{brl(s.price)}</span>
                 </button>
               ))}
             </div>
           </section>
-          {svc && pros.length > 1 && <section className="rounded-2xl bg-card p-5 shadow-card">
+          {svc && elig.length > 1 && <section className="rounded-2xl bg-card p-5 shadow-card">
             <h2 className="font-semibold">2. Profissional</h2>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               <button onClick={() => { setPro("any"); setSlot(null); }} className={`rounded-xl border p-3 text-left ${pro === "any" ? "border-primary bg-secondary" : ""}`}><b>Sem preferência</b><span className="block text-xs text-muted-foreground">O primeiro disponível</span></button>
-              {pros.map((p) => (
+              {elig.map((p) => (
                 <button key={p.id} onClick={() => { setPro(p); setSlot(null); }} className={`rounded-xl border p-3 text-left ${pro !== "any" && pro?.id === p.id ? "border-primary bg-secondary" : ""}`}><b>{p.name}</b></button>
               ))}
             </div>
           </section>}
+          {svc && pros.length > 0 && elig.length === 0 && <p className="rounded-2xl bg-card p-5 text-sm shadow-card">Nenhum profissional disponível para este serviço no momento.</p>}
           {svc && (pro || pros.length === 0) && <section className="rounded-2xl bg-card p-5 shadow-card">
-            <h2 className="font-semibold">{pros.length > 1 ? "3" : "2"}. Dia e horário</h2>
+            <h2 className="font-semibold">{elig.length > 1 ? "3" : "2"}. Dia e horário</h2>
             <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
               {days.map((d) => (
                 <button key={d.toISOString()} onClick={() => { setDay(d); setSlot(null); }} className={`min-w-16 rounded-xl border px-3 py-2 text-center text-sm ${day?.getTime() === d.getTime() ? "border-primary bg-primary text-primary-foreground" : ""}`}>
@@ -184,7 +198,7 @@ function Booking() {
             </div>}
           </section>}
           {slot && svc && <section className="space-y-3 rounded-2xl bg-card p-5 shadow-card">
-            <h2 className="font-semibold">{pros.length > 1 ? "4" : "3"}. Seus dados</h2>
+            <h2 className="font-semibold">{elig.length > 1 ? "4" : "3"}. Seus dados</h2>
             <Input placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} />
             <Input placeholder="(11) 98765-4321" inputMode="tel" value={phone} onChange={(e) => setPhone(maskWhatsapp(e.target.value))} />
             <Input placeholder="CPF (exigido pelo Pix)" inputMode="numeric" value={cpf} onChange={(e) => setCpf(e.target.value.replace(/\D/g, "").slice(0, 11))} />
