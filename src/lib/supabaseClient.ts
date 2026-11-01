@@ -22,6 +22,9 @@ export type Business = {
   logo_url: string | null;
   banner_url?: string | null;
   asaas_api_key?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  document?: string | null;
   settings?: Record<string, unknown>;
   status?: "active" | "suspended";
   suspended_reason?: string | null;

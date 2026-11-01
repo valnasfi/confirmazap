@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import { Pencil, Trash2 } from "lucide-react";
 import { AppShell, useBiz } from "@/components/AppShell";
 import { supabase, type Service } from "@/lib/supabaseClient";
-import { brl } from "@/lib/booking";
+import { brl, maskWhatsapp } from "@/lib/booking";
+import { isValidDocument, isValidEmail, isValidPhone, maskDocument, onlyDigits } from "@/lib/document";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -25,7 +26,7 @@ function Config() {
   const [editId, setEditId] = useState<string | null>(null);
   const [ed, setEd] = useState({ name: "", duration: "", price: "", deposit: "" });
   const s0 = (business.settings ?? {}) as Settings;
-  const [biz, setBiz] = useState({ name: business.name, whatsapp: business.whatsapp ?? "", asaas: business.asaas_api_key ?? "", cancel: String(s0.cancel_hours ?? 4) });
+  const [biz, setBiz] = useState({ name: business.name, whatsapp: business.whatsapp ?? "", asaas: business.asaas_api_key ?? "", cancel: String(s0.cancel_hours ?? 4), email: business.email ?? "", phone: maskWhatsapp(business.phone ?? ""), doc: maskDocument(business.document ?? "") });
 
   const load = () => supabase.from("services").select("*").eq("business_id", business.id).order("name").then(({ data }) => setServices((data as Service[]) ?? []));
   useEffect(() => { load(); }, [business.id]);
@@ -59,8 +60,12 @@ function Config() {
   };
 
   const saveBiz = async () => {
+    if (!biz.name.trim()) { toast.error("Informe o nome do estabelecimento"); return; }
+    if (!isValidEmail(biz.email)) { toast.error("Informe um e-mail válido"); return; }
+    if (!isValidPhone(biz.phone)) { toast.error("Informe o telefone com DDD"); return; }
+    if (!isValidDocument(biz.doc)) { toast.error("CPF ou CNPJ inválido. Confira os números."); return; }
     const settings = { ...s0, cancel_hours: Number(biz.cancel) };
-    const { error } = await supabase.from("businesses").update({ name: biz.name, whatsapp: biz.whatsapp, asaas_api_key: biz.asaas || null, settings }).eq("id", business.id);
+    const { error } = await supabase.from("businesses").update({ name: biz.name.trim(), email: biz.email.trim(), phone: onlyDigits(biz.phone), document: onlyDigits(biz.doc), whatsapp: biz.whatsapp, asaas_api_key: biz.asaas || null, settings }).eq("id", business.id);
     if (error) toast.error(error.message); else { toast.success("Salvo"); reload(); }
   };
 
@@ -108,6 +113,9 @@ function Config() {
       <section className={`${card} grid gap-3 sm:grid-cols-2`}>
         <h2 className="text-lg font-semibold sm:col-span-2">Negócio e regras</h2>
         <label className="text-sm">Nome<Input value={biz.name} onChange={(e) => setBiz({ ...biz, name: e.target.value })} /></label>
+        <label className="text-sm">E-mail<Input type="email" value={biz.email} onChange={(e) => setBiz({ ...biz, email: e.target.value })} /></label>
+        <label className="text-sm">Telefone<Input inputMode="tel" value={biz.phone} onChange={(e) => setBiz({ ...biz, phone: maskWhatsapp(e.target.value) })} /></label>
+        <label className="text-sm">CPF ou CNPJ<Input inputMode="numeric" value={biz.doc} onChange={(e) => setBiz({ ...biz, doc: maskDocument(e.target.value) })} /></label>
         <label className="text-sm">WhatsApp<Input value={biz.whatsapp} onChange={(e) => setBiz({ ...biz, whatsapp: e.target.value })} /></label>
         <label className="text-sm">Cancelamento grátis até (horas antes)<Input type="number" value={biz.cancel} onChange={(e) => setBiz({ ...biz, cancel: e.target.value })} /></label>
         <label className="text-sm">Chave de API do Asaas<Input type="password" value={biz.asaas} onChange={(e) => setBiz({ ...biz, asaas: e.target.value })} /></label>

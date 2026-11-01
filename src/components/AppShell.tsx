@@ -4,6 +4,8 @@ import type { Session } from "@supabase/supabase-js";
 import { CalendarDays, LayoutDashboard, LogOut, Receipt, Settings, ShieldCheck, Users, MessageCircleHeart } from "lucide-react";
 import { supabase, supabaseConfigured, type Business } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
+import { maskWhatsapp } from "@/lib/booking";
+import { isValidDocument, isValidEmail, isValidPhone, maskDocument, onlyDigits } from "@/lib/document";
 
 type Ctx = { session: Session; business: Business; reload: () => Promise<void> };
 const BizCtx = createContext<Ctx | null>(null);
@@ -113,10 +115,16 @@ function Suspended({ reason }: { reason: string | null }) {
 function CreateBusiness({ session, onDone }: { session: Session; onDone: () => void }) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [phone, setPhone] = useState("");
+  const [doc, setDoc] = useState("");
   const [err, setErr] = useState("");
+  const email = session.user.email ?? "";
+  const valid = name.trim().length >= 2 && !!slug && isValidEmail(email) && isValidPhone(phone) && isValidDocument(doc);
   const save = async () => {
-    const { error } = await supabase.from("businesses").insert({ name, slug, owner_id: session.user.id });
-    if (error) setErr(error.message); else onDone();
+    if (!isValidPhone(phone)) { setErr("Informe o telefone com DDD."); return; }
+    if (!isValidDocument(doc)) { setErr("CPF ou CNPJ inválido. Confira os números."); return; }
+    const { error } = await supabase.from("businesses").insert({ name: name.trim(), slug, owner_id: session.user.id, email, phone: onlyDigits(phone), document: onlyDigits(doc), whatsapp: phone });
+    if (error) setErr(/column|schema cache/i.test(error.message) ? "O cadastro ainda não foi atualizado no Supabase. Rode o SQL do cadastro e tente de novo." : error.message); else onDone();
   };
   return (
     <div className="grid min-h-screen place-items-center p-6">
@@ -126,8 +134,11 @@ function CreateBusiness({ session, onDone }: { session: Session; onDone: () => v
         <input className="mt-6 w-full rounded-lg border bg-background px-3 py-2" placeholder="Nome (ex.: Barbearia do Zé)" value={name}
           onChange={(e) => { setName(e.target.value); setSlug(e.target.value.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")); }} />
         <input className="mt-3 w-full rounded-lg border bg-background px-3 py-2" placeholder="slug" value={slug} onChange={(e) => setSlug(e.target.value)} />
+        <input className="mt-3 w-full rounded-lg border bg-muted px-3 py-2 text-muted-foreground" type="email" readOnly aria-label="E-mail" value={email} />
+        <input className="mt-3 w-full rounded-lg border bg-background px-3 py-2" placeholder="Telefone com DDD" inputMode="tel" value={phone} onChange={(e) => setPhone(maskWhatsapp(e.target.value))} />
+        <input className="mt-3 w-full rounded-lg border bg-background px-3 py-2" placeholder="CPF ou CNPJ" inputMode="numeric" value={doc} onChange={(e) => setDoc(maskDocument(e.target.value))} />
         {err && <p className="mt-2 text-sm text-destructive">{err}</p>}
-        <Button className="mt-5 w-full" disabled={!name || !slug} onClick={save}>Criar</Button>
+        <Button className="mt-5 w-full" disabled={!valid} onClick={save}>Criar</Button>
       </div>
     </div>
   );
