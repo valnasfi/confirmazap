@@ -19,21 +19,21 @@ on conflict (id) do update
 drop policy if exists "business assets owner select" on storage.objects;
 create policy "business assets owner select" on storage.objects for select to authenticated
   using (bucket_id = 'business-assets' and exists (
-    select 1 from public.businesses b where b.id::text = (storage.foldername(name))[1] and b.owner_id = auth.uid()));
+    select 1 from public.businesses b where b.id::text = (storage.foldername(objects.name))[1] and b.owner_id = auth.uid()));
 
 drop policy if exists "business assets owner insert" on storage.objects;
 create policy "business assets owner insert" on storage.objects for insert to authenticated
   with check (bucket_id = 'business-assets' and exists (
-    select 1 from public.businesses b where b.id::text = (storage.foldername(name))[1] and b.owner_id = auth.uid()));
+    select 1 from public.businesses b where b.id::text = (storage.foldername(objects.name))[1] and b.owner_id = auth.uid()));
 
 drop policy if exists "business assets owner update" on storage.objects;
 create policy "business assets owner update" on storage.objects for update to authenticated
   using (bucket_id = 'business-assets' and exists (
-    select 1 from public.businesses b where b.id::text = (storage.foldername(name))[1] and b.owner_id = auth.uid()))
+    select 1 from public.businesses b where b.id::text = (storage.foldername(objects.name))[1] and b.owner_id = auth.uid()))
   with check (bucket_id = 'business-assets' and exists (
-    select 1 from public.businesses b where b.id::text = (storage.foldername(name))[1] and b.owner_id = auth.uid()));
+    select 1 from public.businesses b where b.id::text = (storage.foldername(objects.name))[1] and b.owner_id = auth.uid()));
 
 drop policy if exists "business assets owner delete" on storage.objects;
 create policy "business assets owner delete" on storage.objects for delete to authenticated
   using (bucket_id = 'business-assets' and exists (
-    select 1 from public.businesses b where b.id::text = (storage.foldername(name))[1] and b.owner_id = auth.uid()));
+    select 1 from public.businesses b where b.id::text = (storage.foldername(objects.name))[1] and b.owner_id = auth.uid()));

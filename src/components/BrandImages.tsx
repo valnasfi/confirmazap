@@ -20,7 +20,7 @@ const SPEC = {
 // Mensagens técnicas do Supabase viram um aviso que o profissional entende.
 function friendly(message: string) {
   return /bucket not found|row-level security|permission denied|does not exist|schema cache/i.test(message)
-    ? "O armazenamento de imagens ainda não foi configurado no Supabase. Rode o SQL das imagens e tente de novo."
+    ? `O armazenamento de imagens ainda não está liberado no Supabase. Rode o SQL das imagens e tente de novo. (Detalhe: ${message})`
     : message;
 }
 
