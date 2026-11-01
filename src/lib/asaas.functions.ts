@@ -5,6 +5,7 @@ import { HOLD_MINUTES, activeHoldFilter } from "./booking";
 import { getEntitlements, getUsage } from "./plans.core";
 import { siteUrl, toWaNumber, firstName } from "./manage.core";
 import { uazapi } from "./uazapi";
+import { DEFAULT_NOSHOW_MESSAGE } from "./birthday";
 
 // Profissionais ativos do negócio. Sem a tabela (SQL ainda não rodado) ou sem nenhum, a agenda vale para o negócio todo.
 async function activePros(admin: ReturnType<typeof getSupabaseAdmin>, businessId: string) {
@@ -262,7 +263,7 @@ async function sendNoShowNudge(admin: ReturnType<typeof getSupabaseAdmin>, appt:
     const link = `${siteUrl()}/agendar/${b.slug}`;
     const custom = ((b.settings ?? {}) as { noshow?: { enabled?: boolean; message?: string } }).noshow;
     if (custom?.enabled === false) return false;
-    const base = custom?.message?.trim() || "Olá, {nome}! Sentimos sua falta no seu horário na {negocio}. 😕 Sem problema, a gente remarca: escolha um novo horário aqui {link}";
+    const base = custom?.message?.trim() || DEFAULT_NOSHOW_MESSAGE;
     const text = base.replace(/\{nome\}/gi, firstName(appt.customers?.name)).replace(/\{negocio\}/gi, b.name).replace(/\{link\}/gi, link) + (/\{link\}/i.test(base) ? "" : ` ${link}`);
     const r = await uazapi("/send/text", { token: conn.instance_token, body: { number, text } });
     return r.ok;

@@ -19,3 +19,7 @@ export function renderReactivation(template: string, fullName: string | null, bu
   const withLink = /\{link\}/i.test(template) ? base : `${base} ${link}`;
   return /\bSAIR\b/.test(withLink) ? withLink : `${withLink}\n\n${OPT_OUT_LINE}`;
 }
+
+// Mensagem enviada quando o profissional marca falta (settings.noshow). {link} leva à página de agendamento.
+export const DEFAULT_NOSHOW_MESSAGE = "Olá, {nome}! Sentimos sua falta no seu horário na {negocio}. 😕 Sem problema, a gente remarca: escolha um novo horário aqui {link}";
+export type NoShowSettings = { enabled?: boolean; message?: string };

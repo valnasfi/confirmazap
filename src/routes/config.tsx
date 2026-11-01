@@ -14,6 +14,7 @@ import { WhatsAppConnect } from "@/components/WhatsAppConnect";
 import { BirthdaySettings } from "@/components/BirthdaySettings";
 import { RemindersSettings } from "@/components/RemindersSettings";
 import { ReactivationSettings } from "@/components/ReactivationSettings";
+import { NoShowSettings } from "@/components/NoShowSettings";
 import { PlanBilling } from "@/components/PlanBilling";
 import { addService } from "@/lib/services.functions";
 import { ProfessionalsManager } from "@/components/ProfessionalsManager";
@@ -144,6 +145,8 @@ function Config() {
           <RemindersSettings />
 
           <BirthdaySettings />
+
+          <NoShowSettings />
 
           <ReactivationSettings />
 
