@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  // /login?modo=cadastro (botões da página inicial) abre direto no cadastro.
+  useEffect(() => { if (new URLSearchParams(window.location.search).get("modo") === "cadastro") setMode("up"); }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
