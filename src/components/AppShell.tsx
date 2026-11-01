@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { Session } from "@supabase/supabase-js";
-import { CalendarDays, LayoutDashboard, LogOut, Receipt, Settings, ShieldCheck, Users, MessageCircleHeart } from "lucide-react";
+import { CalendarDays, LayoutDashboard, LogOut, Receipt, Settings, ShieldCheck, Users } from "lucide-react";
 import { supabase, supabaseConfigured, type Business } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { PlanBanner } from "@/components/PlanBanner";
@@ -27,7 +27,7 @@ const nav = [
 export function Logo({ light }: { light?: boolean }) {
   return (
     <span className={`flex items-center gap-2 font-display text-lg font-bold ${light ? "text-ink-foreground" : "text-foreground"}`}>
-      <span className="grid h-8 w-8 place-items-center rounded-lg bg-accent text-accent-foreground"><MessageCircleHeart className="h-5 w-5" /></span>
+      <img src="/logo.png" alt="" width={32} height={32} className="h-8 w-8 rounded-full" />
       ConfirmaZap
     </span>
   );
