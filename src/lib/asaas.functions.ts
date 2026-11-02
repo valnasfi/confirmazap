@@ -252,22 +252,23 @@ export const getBookingStatus = createServerFn({ method: "POST" })
   });
 
 // Depois da falta, convida o cliente a remarcar pelo WhatsApp conectado do negócio. Falha aqui nunca atrapalha marcar a falta.
-async function sendNoShowNudge(admin: ReturnType<typeof getSupabaseAdmin>, appt: { business_id: string; customers?: { name?: string | null; whatsapp?: unknown } | null; businesses?: { slug?: string | null; name?: string | null } | null }) {
+async function sendNoShowNudge(admin: ReturnType<typeof getSupabaseAdmin>, appt: { business_id: string; customers?: { name?: string | null; whatsapp?: unknown } | null }): Promise<{ sent: boolean; reason: string }> {
   try {
     const number = toWaNumber(appt.customers?.whatsapp);
-    if (!number) return false;
+    if (!number) return { sent: false, reason: "o cliente não tem um WhatsApp válido cadastrado" };
     const { data: conn } = await admin.from("whatsapp_connections").select("instance_token").eq("business_id", appt.business_id).maybeSingle();
-    if (!conn?.instance_token) return false;
+    if (!conn?.instance_token) return { sent: false, reason: "o WhatsApp do negócio não está conectado (Configurações > Negócio e regras)" };
     const { data: b } = await admin.from("businesses").select("name,slug,settings").eq("id", appt.business_id).maybeSingle();
-    if (!b) return false;
-    const link = `${siteUrl()}/agendar/${b.slug}`;
+    if (!b) return { sent: false, reason: "negócio não encontrado" };
     const custom = ((b.settings ?? {}) as { noshow?: { enabled?: boolean; message?: string } }).noshow;
-    if (custom?.enabled === false) return false;
+    if (custom?.enabled === false) return { sent: false, reason: "a mensagem após falta está desligada nas configurações" };
+    const link = `${siteUrl()}/agendar/${b.slug}`;
     const base = custom?.message?.trim() || DEFAULT_NOSHOW_MESSAGE;
     const text = base.replace(/\{nome\}/gi, firstName(appt.customers?.name)).replace(/\{negocio\}/gi, b.name).replace(/\{link\}/gi, link) + (/\{link\}/i.test(base) ? "" : ` ${link}`);
     const r = await uazapi("/send/text", { token: conn.instance_token, body: { number, text } });
-    return r.ok;
-  } catch { return false; }
+    if (!r.ok) return { sent: false, reason: `o WhatsApp recusou o envio (erro ${r.status}). Reconecte o WhatsApp em Configurações` };
+    return { sent: true, reason: "" };
+  } catch (e) { return { sent: false, reason: `falha ao enviar (${(e as Error).message})` }; }
 }
 
 // Marca falta. Se o sinal já foi pago na reserva, não há nova cobrança.
@@ -285,8 +286,8 @@ export const chargeNoShow = createServerFn({ method: "POST" })
 
     const wasNoShow = appt.status === "no_show";
     await admin.from("appointments").update({ status: "no_show" }).eq("id", appt.id);
-    const nudged = wasNoShow ? false : await sendNoShowNudge(admin, appt);
-    const note = nudged ? " Mensagem de reagendamento enviada ao cliente." : "";
+    const nudge = wasNoShow ? { sent: false, reason: "" } : await sendNoShowNudge(admin, appt);
+    const note = nudge.sent ? " Mensagem de reagendamento enviada ao cliente." : nudge.reason ? ` Mensagem de reagendamento NÃO enviada: ${nudge.reason}.` : "";
     const c = appt.customers;
     if (appt.deposit_paid) return { ok: true, message: `Falta marcada. O sinal já estava pago.${note}` };
     // Reserva do fluxo novo que não chegou a pagar o sinal: não existe autorização Pix para cobrar.
