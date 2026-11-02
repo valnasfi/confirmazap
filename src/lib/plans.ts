@@ -15,7 +15,7 @@ export type PlanSpec = {
 };
 
 export const PLANS: Record<PlanKey, PlanSpec> = {
-  starter: { name: "Starter", price: 49, maxAppointmentsPerMonth: 100, maxServices: 5, maxProfessionals: 1, reminder2h: false, birthday: false, reactivation: false, customFields: false, banner: false },
+  starter: { name: "Starter", price: 49, maxAppointmentsPerMonth: 250, maxServices: 5, maxProfessionals: 1, reminder2h: false, birthday: false, reactivation: false, customFields: false, banner: false },
   pro: { name: "Pro", price: 99, maxAppointmentsPerMonth: null, maxServices: null, maxProfessionals: 5, reminder2h: true, birthday: true, reactivation: true, customFields: true, banner: true },
 };
 
