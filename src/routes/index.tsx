@@ -129,12 +129,12 @@ function Pain() {
   ];
   return (
     <section className="mx-auto max-w-6xl px-5 py-20">
-      <h2 className="max-w-3xl font-display text-3xl font-bold md:text-4xl">Toda falta é dinheiro que você deixou na mesa</h2>
-      <p className="mt-3 max-w-2xl text-muted-foreground">Se você atende por hora marcada, já passou por isso: o horário chega, o cliente não, e a agenda fica com buraco.</p>
+      <h2 className="mx-auto max-w-3xl text-center font-display text-3xl font-bold md:text-4xl">Toda falta é dinheiro que você deixou na mesa</h2>
+      <p className="mx-auto mt-3 max-w-2xl text-center text-muted-foreground">Se você atende por hora marcada, já passou por isso: o horário chega, o cliente não, e a agenda fica com buraco.</p>
       <div className="mt-10 grid gap-4 md:grid-cols-3">
         {items.map((i) => (
-          <div key={i.t} className="rounded-2xl bg-card p-6 shadow-card">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-destructive/10 text-destructive"><X className="h-5 w-5" /></span>
+          <div key={i.t} className="rounded-2xl bg-card p-6 text-center shadow-card">
+            <span className="mx-auto grid h-9 w-9 place-items-center rounded-lg bg-destructive/10 text-destructive"><X className="h-5 w-5" /></span>
             <h3 className="mt-4 text-lg font-semibold">{i.t}</h3>
             <p className="mt-1.5 text-sm text-muted-foreground">{i.d}</p>
           </div>
@@ -154,7 +154,7 @@ function Steps() {
   return (
     <section id="como-funciona" className="scroll-mt-20 bg-secondary/60 py-20">
       <div className="mx-auto max-w-6xl px-5">
-        <h2 className="font-display text-3xl font-bold md:text-4xl">Como funciona, do agendamento ao atendimento</h2>
+        <h2 className="text-center font-display text-3xl font-bold md:text-4xl">Como funciona, do agendamento ao atendimento</h2>
         <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {steps.map((s, n) => (
             <div key={s.t} className="relative rounded-2xl bg-card p-6 shadow-card">
@@ -183,7 +183,7 @@ function Features() {
   ];
   return (
     <section id="recursos" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-20">
-      <h2 className="max-w-3xl font-display text-3xl font-bold md:text-4xl">Tudo que sua agenda precisa para parar de vazar dinheiro</h2>
+      <h2 className="mx-auto max-w-3xl text-center font-display text-3xl font-bold md:text-4xl">Tudo que sua agenda precisa para parar de vazar dinheiro</h2>
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {f.map((x) => (
           <div key={x.t} className="rounded-2xl bg-card p-5 shadow-card transition hover:-translate-y-0.5">
