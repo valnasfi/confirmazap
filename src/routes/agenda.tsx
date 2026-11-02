@@ -27,9 +27,9 @@ function Agenda() {
   const load = async () => {
     // customer_confirmed_at só existe depois do SQL dos lembretes: sem ele, a agenda continua funcionando.
     const base = "id,start_at,end_at,status,customers(name,whatsapp),services(name,deposit_value)";
-    let r = await supabase.from("appointments").select(`${base},customer_confirmed_at,professionals(name)`).eq("business_id", business.id).or(activeHoldFilter());
-    if (r.error) r = await supabase.from("appointments").select(`${base},customer_confirmed_at`).eq("business_id", business.id).or(activeHoldFilter());
-    if (r.error) r = await supabase.from("appointments").select(base).eq("business_id", business.id).or(activeHoldFilter());
+    let r = await supabase.from("appointments").select(`${base},customer_confirmed_at,professionals(name)`).eq("business_id", business.id).neq("status", "canceled").or(activeHoldFilter());
+    if (r.error) r = await supabase.from("appointments").select(`${base},customer_confirmed_at`).eq("business_id", business.id).neq("status", "canceled").or(activeHoldFilter());
+    if (r.error) r = await supabase.from("appointments").select(base).eq("business_id", business.id).neq("status", "canceled").or(activeHoldFilter());
     setItems((r.data as unknown as Appt[]) ?? []);
   };
   useEffect(() => { load(); }, [business.id]);

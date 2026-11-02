@@ -120,8 +120,8 @@ function Dashboard() {
       </div>
       <h2 className="mt-10 text-xl font-semibold">Hoje</h2>
       <div className="mt-3 divide-y rounded-2xl bg-card shadow-card">
-        {rows.length === 0 && <p className="p-5 text-sm text-muted-foreground">Nenhum agendamento hoje.</p>}
-        {rows.map((r) => (
+        {rows.filter((r) => r.status !== "canceled").length === 0 && <p className="p-5 text-sm text-muted-foreground">Nenhum agendamento hoje.</p>}
+        {rows.filter((r) => r.status !== "canceled").map((r) => (
           <div key={r.id} className="flex items-center justify-between p-4">
             <div><p className="font-semibold">{new Date(asUtc(r.start_at)).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} · {r.customers?.name}</p><p className="text-sm text-muted-foreground">{r.services?.name}</p></div>
             <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusMeta[r.status]?.cls}`}>{statusMeta[r.status]?.label}</span>
