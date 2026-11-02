@@ -109,10 +109,8 @@ function PhoneMock() {
           <div className="text-xs"><b className="block text-sm">Barbearia do Zé</b>online</div>
         </div>
         <div className="space-y-2.5">
-          <div className={`${bubble} bg-white`}>Olá, Ana! Lembrete: amanhã às <b>15:00</b>, Corte com o Zé. ✂️<br />Responda <b>1</b> para confirmar ou <b>2</b> para cancelar.</div>
-          <div className={`${bubble} ml-auto bg-[oklch(0.88_0.09_150)] text-right`}>1</div>
-          <div className={`${bubble} bg-white`}>Confirmado! ✅ Te esperamos amanhã.</div>
-          <div className="mt-4 rounded-xl bg-primary/10 p-3 text-center text-[11px] font-semibold text-primary">
+          <div className={`${bubble} bg-white`}>Olá, Ana! Lembrete: amanhã às <b>15:00</b>, Corte com o Zé. ✂️<br />Para confirmar, remarcar ou cancelar, toque no link:<br /><u>confirmazap.lovable.app/agendamento/…</u></div>
+                    <div className="mt-4 rounded-xl bg-primary/10 p-3 text-center text-[11px] font-semibold text-primary">
             <CalendarCheck className="mx-auto mb-1 h-4 w-4" />Presença confirmada na sua agenda
           </div>
         </div>
@@ -148,7 +146,7 @@ function Steps() {
   const steps = [
     { i: CalendarCheck, t: "Cliente agenda pelo seu link", d: "Escolhe serviço, profissional, dia e horário em segundos, sem baixar app nem criar conta." },
     { i: QrCode, t: "Paga o sinal por Pix", d: "O valor do sinal você define em cada serviço. Pagou, o horário está garantido, sozinho." },
-    { i: BellRing, t: "Recebe lembrete e confirma", d: "O ConfirmaZap avisa no WhatsApp antes do horário. O cliente responde 1 para confirmar ou 2 para cancelar." },
+    { i: BellRing, t: "Recebe lembrete e confirma", d: "O ConfirmaZap avisa no WhatsApp antes do horário. O cliente abre o link e confirma, remarca ou cancela em um toque." },
     { i: CalendarClock, t: "Você atende, ou reocupa o horário", d: "Quem cancela libera a vaga a tempo. Quem falta recebe um convite automático para remarcar." },
   ];
   return (
@@ -236,7 +234,7 @@ function Pricing() {
     p.maxProfessionals === 1 ? "1 profissional" : `Até ${p.maxProfessionals} profissionais`,
     "Página de agendamento própria",
     "Sinal por Pix",
-    "Lembrete 24h antes com confirmação",
+    "Lembrete 24h antes com link de confirmação",
     "Cancelar e remarcar pelo link",
   ];
   const proExtra = ["Lembrete 2h antes", "Feliz aniversário automático", "Reativação de clientes sumidos", "Campos personalizados no cadastro", "Banner na página de agendamento"];

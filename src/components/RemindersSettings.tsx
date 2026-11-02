@@ -37,7 +37,7 @@ export function RemindersSettings() {
         <h2 className="flex items-center gap-2 text-lg font-semibold"><BellRing className="h-5 w-5" />Lembretes e confirmação</h2>
         <Switch checked={enabled} onCheckedChange={setEnabled} aria-label="Ativar lembretes" />
       </div>
-      <p className="mt-1 text-sm text-muted-foreground">O cliente recebe o lembrete pelo seu WhatsApp e responde <b>1</b> para confirmar ou <b>2</b> para cancelar. A mensagem também leva um link para remarcar. Envios entre 7h e 21h, e só com o WhatsApp conectado.</p>
+      <p className="mt-1 text-sm text-muted-foreground">O cliente recebe o lembrete pelo seu WhatsApp com um <b>link</b> para confirmar presença, remarcar ou cancelar. Envios entre 7h e 21h, e só com o WhatsApp conectado.</p>
       <div className={`mt-4 space-y-3 text-sm ${enabled ? "" : "pointer-events-none opacity-50"}`}>
         <label className="flex items-center gap-3"><Checkbox checked={h24} onCheckedChange={(v) => setH24(v === true)} />Lembrete 24 horas antes</label>
         <label className="flex items-center gap-3"><Checkbox disabled={no2h} checked={h2 && !no2h} onCheckedChange={(v) => setH2(v === true)} />Lembrete 2 horas antes{no2h && <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase">Pro</span>}</label>

@@ -38,6 +38,7 @@ export const getManage = createServerFn({ method: "POST" })
       depositPaid: a.deposit_paid === true,
       professionalId: (a.professional_id ?? null) as string | null,
       cancelHours: hours,
+      confirmedByCustomer: Boolean(a.customer_confirmed_at),
       canChange: a.status === "confirmed" && upcoming,
       freeWindow: withinFreeWindow(a.start_at, hours),
     };
@@ -82,4 +83,16 @@ export const rescheduleByToken = createServerFn({ method: "POST" })
     // Novo horário, novos lembretes.
     await admin.from("reminders").delete().eq("appointment_id", a.id);
     return { ok: true, startAt: start.toISOString() };
+  });
+
+export const confirmByToken = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => tokenSchema.parse(i))
+  .handler(async ({ data }) => {
+    const { admin, a } = await load(data.token);
+    if (a.status !== "confirmed" || new Date(asUtc(a.start_at)).getTime() < Date.now()) throw new Error("Este agendamento não pode mais ser confirmado.");
+    if (!a.customer_confirmed_at) {
+      const { error } = await admin.from("appointments").update({ customer_confirmed_at: new Date().toISOString() }).eq("id", a.id);
+      if (error) throw new Error(/column|schema cache/i.test(error.message) ? "A confirmação por link ainda não foi ativada no Supabase." : error.message);
+    }
+    return { ok: true as const };
   });

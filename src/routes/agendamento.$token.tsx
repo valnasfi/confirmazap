@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { generateSlots, isOpenDay } from "@/lib/booking";
 import { getBusySlots } from "@/lib/asaas.functions";
-import { cancelByToken, getManage, rescheduleByToken } from "@/lib/manage.functions";
+import { cancelByToken, confirmByToken, getManage, rescheduleByToken } from "@/lib/manage.functions";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Logo } from "@/components/AppShell";
@@ -44,6 +44,16 @@ function Manage() {
   }, [info, day]);
 
   const slots = useMemo(() => (day && info ? generateSlots(day, info.durationMinutes, busySlots).filter((s) => s > new Date()) : []), [day, info, busySlots]);
+
+  const doConfirm = async () => {
+    setBusy(true);
+    try {
+      await confirmByToken({ data: { token } });
+      toast.success("Presença confirmada. Te esperamos!");
+      await load();
+    } catch (e) { toast.error((e as Error).message); }
+    setBusy(false);
+  };
 
   const doCancel = async () => {
     setBusy(true);
@@ -110,8 +120,13 @@ function Manage() {
 
             {info.canChange && mode === "view" && (
               <section className={`${card} space-y-3`}>
+                {info.confirmedByCustomer ? (
+                  <p className="rounded-xl bg-secondary p-3 text-center text-sm font-semibold">✔ Presença confirmada. Te esperamos!</p>
+                ) : (
+                  <Button className="w-full" disabled={busy} onClick={doConfirm}>Confirmar minha presença</Button>
+                )}
                 {info.freeWindow ? (
-                  <Button className="w-full" onClick={() => setMode("reschedule")}>Remarcar meu horário</Button>
+                  <Button className="w-full" variant="secondary" onClick={() => setMode("reschedule")}>Remarcar meu horário</Button>
                 ) : (
                   <p className="rounded-xl bg-muted p-3 text-sm">Faltam menos de {info.cancelHours}h para o horário, então não dá para remarcar por aqui.{talk && <> <a className="font-medium underline" href={talk}>Falar com {info.businessName}</a></>}</p>
                 )}

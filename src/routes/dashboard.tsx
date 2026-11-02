@@ -90,7 +90,7 @@ function Dashboard() {
         const lost = noShow.reduce((a, r) => a + price(r), 0);
         const items = [
           { l: "Faltas evitadas", v: String(avoided), sub: `≈ ${brl(avoidedValue)} protegidos`, hi: true },
-          { l: "Confirmaram pelo WhatsApp e vieram", v: String(confirmedShowed.length), sub: "responderam 1 ao lembrete" },
+          { l: "Confirmaram pelo link e vieram", v: String(confirmedShowed.length), sub: "confirmaram no link do lembrete" },
           { l: "Cancelaram antes", v: String(canceled.length), sub: "horário liberado para outro cliente" },
           { l: "Taxa de comparecimento", v: rate === null ? "—" : `${rate}%`, sub: `${showed.length} vieram · ${noShow.length} faltaram` },
           { l: "Perdido com faltas", v: brl(lost), sub: `${noShow.length} ${noShow.length === 1 ? "falta" : "faltas"} no mês` },

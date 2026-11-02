@@ -56,7 +56,7 @@ export function toWaNumber(whatsapp: unknown) {
 export function reminderText(kind: "24h" | "2h", o: { name: string | null; business: string; service: string; startAt: unknown; link: string }) {
   const nome = firstName(o.name);
   if (kind === "24h") {
-    return `Olá, ${nome}! 👋 Lembrete do seu horário na ${o.business}:\n\n📅 ${whenText(o.startAt)}\n✂️ ${o.service}\n\nResponda *1* para CONFIRMAR ou *2* para CANCELAR.\nPara remarcar ou ver os detalhes: ${o.link}`;
+    return `Olá, ${nome}! 👋 Lembrete do seu horário na ${o.business}:\n\n📅 ${whenText(o.startAt)}\n✂️ ${o.service}\n\nPara confirmar, remarcar ou cancelar, é só abrir o link:\n${o.link}`;
   }
-  return `Olá, ${nome}! Seu horário na ${o.business} é hoje, às ${clockText(o.startAt)}. 😉\n\nResponda *1* para CONFIRMAR presença ou *2* para CANCELAR.\nDetalhes: ${o.link}`;
+  return `Olá, ${nome}! Seu horário na ${o.business} é hoje, às ${clockText(o.startAt)}. 😉\n\nConfirme sua presença, remarque ou cancele por aqui:\n${o.link}`;
 }
