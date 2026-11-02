@@ -15,7 +15,6 @@ type RemindersCfg = { enabled?: boolean; h24?: boolean; h2?: boolean };
 
 async function run() {
   const hourBr = new Date(Date.now() - 3 * 3600_000).getUTCHours();
-  const EVENING_FROM = 19; // lembrete da véspera para quem agendou em cima da hora e atende cedo
   if (hourBr < FROM_HOUR || hourBr >= TO_HOUR) return { sent: 0, skipped: "fora do horário de envio" };
 
   const admin = getSupabaseAdmin();
@@ -24,14 +23,16 @@ async function run() {
   if (error) throw new Error(error.message);
 
   let sent = 0, failed = 0;
+  const diag = { businesses: 0, semWhatsapp: 0, vencidos: 0, confirmadosNaJanela: 0, semNumero: 0, jaEnviados: 0 };
   for (const b of businesses ?? []) {
     if (sent >= MAX_PER_RUN) break;
     const cfg = (((b.settings ?? {}) as { reminders?: RemindersCfg }).reminders ?? {}) as RemindersCfg;
     if (cfg.enabled === false) continue; // ligado por padrão
     const { data: conn } = await admin.from("whatsapp_connections").select("instance_token").eq("business_id", b.id).maybeSingle();
-    if (!conn) continue;
+    diag.businesses++;
+    if (!conn) { diag.semWhatsapp++; continue; }
     const ent = await getEntitlements(admin, b.id);
-    if (ent.expired) continue; // teste/assinatura vencidos: sem envios automáticos
+    if (ent.expired) { diag.vencidos++; continue; } // teste/assinatura vencidos: sem envios automáticos
 
     const { data: appts } = await admin
       .from("appointments")
@@ -42,31 +43,25 @@ async function run() {
 
     for (const a of (appts ?? []) as any[]) {
       if (sent >= MAX_PER_RUN) break;
+      diag.confirmadosNaJanela++;
       const startMs = new Date(asUtc(a.start_at)).getTime();
       const createdMs = new Date(asUtc(a.created_at)).getTime();
       const hoursTo = (startMs - now) / 3600_000;
 
       // Quem agendou em cima da hora não precisa do lembrete daquele prazo.
       let kind: "24h" | "2h" | null = null;
-      if (hoursTo <= 2) { if (cfg.h2 !== false && ent.limits.reminder2h && createdMs <= startMs - 2 * 3600_000) kind = "2h"; }
-      else if (hoursTo <= 24) {
-        if (cfg.h24 !== false) {
-          if (createdMs <= startMs - 24 * 3600_000) kind = "24h";
-          else {
-            // Agendou com menos de 24h e o lembrete de 2h cairia antes das 7h (fora do horário de envio): avisa na noite anterior.
-            const startHourBr = new Date(startMs - 3 * 3600_000).getUTCHours();
-            if (startHourBr - 2 < FROM_HOUR && hourBr >= EVENING_FROM) kind = "24h";
-          }
-        }
-      }
+      // Horário até 8h59: o lembrete "2h antes" cairia antes das 7h, então sai às 7h em ponto (primeira execução do dia), em qualquer plano.
+      const earlyBr = new Date(startMs - 3 * 3600_000).getUTCHours() - 2 < FROM_HOUR;
+      if (hoursTo <= 2) { if (cfg.h2 !== false && (ent.limits.reminder2h || earlyBr) && createdMs <= startMs - 2 * 3600_000) kind = "2h"; }
+      else if (hoursTo <= 24) { if (cfg.h24 !== false && createdMs <= startMs - 24 * 3600_000) kind = "24h"; }
       if (!kind || !a.manage_token) continue;
 
       const number = toWaNumber(a.customers?.whatsapp);
-      if (!number) continue;
+      if (!number) { diag.semNumero++; continue; }
 
       // Reserva antes de enviar: se duas execuções se cruzarem, só uma passa.
       const { error: claimErr } = await admin.from("reminders").insert({ appointment_id: a.id, business_id: b.id, kind });
-      if (claimErr) continue;
+      if (claimErr) { diag.jaEnviados++; continue; }
 
       const text = reminderText(kind, { name: a.customers?.name, business: b.name, service: a.services?.name ?? "Atendimento", startAt: a.start_at, link: manageUrl(a.manage_token) });
       try {
@@ -79,7 +74,7 @@ async function run() {
       }
     }
   }
-  return { sent, failed };
+  return { sent, failed, diag };
 }
 
 export const Route = createFileRoute("/api/cron/reminders")({
