@@ -15,6 +15,7 @@ type RemindersCfg = { enabled?: boolean; h24?: boolean; h2?: boolean };
 
 async function run() {
   const hourBr = new Date(Date.now() - 3 * 3600_000).getUTCHours();
+  const EVENING_FROM = 19; // lembrete da véspera para quem agendou em cima da hora e atende cedo
   if (hourBr < FROM_HOUR || hourBr >= TO_HOUR) return { sent: 0, skipped: "fora do horário de envio" };
 
   const admin = getSupabaseAdmin();
@@ -48,7 +49,16 @@ async function run() {
       // Quem agendou em cima da hora não precisa do lembrete daquele prazo.
       let kind: "24h" | "2h" | null = null;
       if (hoursTo <= 2) { if (cfg.h2 !== false && ent.limits.reminder2h && createdMs <= startMs - 2 * 3600_000) kind = "2h"; }
-      else if (hoursTo <= 24) { if (cfg.h24 !== false && createdMs <= startMs - 24 * 3600_000) kind = "24h"; }
+      else if (hoursTo <= 24) {
+        if (cfg.h24 !== false) {
+          if (createdMs <= startMs - 24 * 3600_000) kind = "24h";
+          else {
+            // Agendou com menos de 24h e o lembrete de 2h cairia antes das 7h (fora do horário de envio): avisa na noite anterior.
+            const startHourBr = new Date(startMs - 3 * 3600_000).getUTCHours();
+            if (startHourBr - 2 < FROM_HOUR && hourBr >= EVENING_FROM) kind = "24h";
+          }
+        }
+      }
       if (!kind || !a.manage_token) continue;
 
       const number = toWaNumber(a.customers?.whatsapp);
