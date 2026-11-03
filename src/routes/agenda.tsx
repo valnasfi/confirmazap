@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { AppShell, useBiz, statusMeta } from "@/components/AppShell";
 import { supabase } from "@/lib/supabaseClient";
 import { chargeNoShow } from "@/lib/asaas.functions";
+import { cancelByOwner } from "@/lib/refund.functions";
 import { activeHoldFilter, asUtc } from "@/lib/booking";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,17 @@ function Agenda() {
     if (!sel) return;
     const { error } = await supabase.from("appointments").update({ status }).eq("id", sel.id);
     if (error) toast.error(error.message); else { toast.success("Atualizado"); setSel(null); load(); }
+  };
+  const cancelAppt = async () => {
+    if (!sel) return;
+    setBusy(true);
+    try {
+      const r = await cancelByOwner({ data: { appointmentId: sel.id, accessToken: session.access_token } });
+      if (r.refund) toast.warning("Cancelado. O sinal já estava pago: devolva em Cobranças > Devolver sinal.");
+      else toast.success("Agendamento cancelado");
+      setSel(null); load();
+    } catch (e) { toast.error((e as Error).message); }
+    setBusy(false);
   };
   const noShow = async () => {
     if (!sel) return;
@@ -94,7 +106,7 @@ function Agenda() {
           <div className="grid grid-cols-2 gap-2">
             <Button onClick={() => setStatus("showed")}>Compareceu</Button>
             <Button variant="destructive" disabled={busy} onClick={noShow}>Marcar falta</Button>
-            <Button variant="secondary" onClick={() => setStatus("canceled")}>Cancelar</Button>
+            <Button variant="secondary" onClick={cancelAppt}>Cancelar</Button>
             <a href={wa} target="_blank" rel="noreferrer"><Button variant="outline" className="w-full">WhatsApp</Button></a>
           </div>
         </DialogContent>

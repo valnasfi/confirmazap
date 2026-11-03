@@ -36,7 +36,7 @@ function Cobrancas() {
     } catch (e) { toast.error((e as Error).message); }
     setBusyId(null);
   };
-  const pendingRefunds = rows.filter((r) => r.status === "refund_needed").length;
+  const pendingRefunds = rows.filter((r) => r.status === "refund_needed" || (r.status === "paid" && r.appointments?.status === "canceled")).length;
   return (
     <div>
       <h1 className="text-3xl font-bold">Cobranças</h1>
@@ -50,7 +50,7 @@ function Cobrancas() {
               <tr key={r.id}><td className="p-4">{new Date(r.created_at).toLocaleDateString("pt-BR")}</td><td>{r.customers?.name}</td><td className="font-semibold">{brl(r.value)}</td>
                 <td><span className={`rounded-full px-2 py-1 text-xs ${r.status === "paid" ? "bg-st-confirmed/20" : r.status === "failed" || r.status === "refund_needed" ? "bg-st-noshow/20" : "bg-st-pending/20"}`}>{label[r.status] ?? r.status}</span></td>
                 <td className="font-mono text-xs text-muted-foreground">{r.asaas_payment_id ?? "—"}</td>
-                <td className="pr-4 text-right">{r.status === "refund_needed" && <Button size="sm" disabled={busyId === r.id} onClick={() => refund(r)}>{busyId === r.id ? "Devolvendo…" : "Devolver sinal"}</Button>}</td></tr>
+                <td className="pr-4 text-right">{(r.status === "refund_needed" || (r.status === "paid" && r.appointments?.status === "canceled")) && <Button size="sm" disabled={busyId === r.id} onClick={() => refund(r)}>{busyId === r.id ? "Devolvendo…" : "Devolver sinal"}</Button>}</td></tr>
             ))}
           </tbody>
         </table>
