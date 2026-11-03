@@ -15,7 +15,7 @@ async function platformAsaas(path: string, method: "GET" | "POST" | "DELETE", bo
   const res = await fetch(base() + path, {
     method,
     headers: { "Content-Type": "application/json", access_token: key, "User-Agent": "ReservaPix" },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined ? null : JSON.stringify(body),
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(json?.errors?.[0]?.description || `Asaas erro ${res.status}`);

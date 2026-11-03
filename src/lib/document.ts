@@ -27,7 +27,7 @@ function cnpjOk(d: string) {
   for (const n of [12, 13]) {
     const w = n === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
     let sum = 0;
-    for (let i = 0; i < n; i++) sum += Number(d[i]) * w[i];
+    for (let i = 0; i < n; i++) sum += Number(d[i]) * (w[i] ?? 0);
     const r = sum % 11;
     const dv = r < 2 ? 0 : 11 - r;
     if (dv !== Number(d[n])) return false;

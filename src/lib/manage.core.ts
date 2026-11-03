@@ -9,7 +9,7 @@ export function asUtc(value: unknown) {
   return /(Z|[+-]\d{2}(:?\d{2})?)$/i.test(s) ? s : s.replace(" ", "T") + "Z";
 }
 
-export const siteUrl = () => (process.env["PUBLIC_SITE_URL"] || "https://confirmazap.lovable.app").replace(/\/$/, "");
+export const siteUrl = () => (process.env["PUBLIC_SITE_URL"] || "https://reservapix.vip").replace(/\/$/, "");
 export const manageUrl = (token: string) => `${siteUrl()}/agendamento/${token}`;
 
 export function cancelHoursOf(settings: unknown): number {

@@ -34,7 +34,7 @@ async function asaas(apiKey: string, path: string, body?: unknown) {
   const res = await fetch(asaasBase() + path, {
     method: body === undefined ? "GET" : "POST",
     headers: { "Content-Type": "application/json", access_token: apiKey, "User-Agent": "ReservaPix" },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined ? null : JSON.stringify(body),
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {

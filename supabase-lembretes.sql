@@ -34,7 +34,7 @@ select cron.schedule(
   'confirmazap-lembretes',
   '*/15 * * * *',
   $$ select net.http_post(
-       url := 'https://confirmazap.lovable.app/api/cron/reminders',
+       url := 'https://reservapix.vip/api/cron/reminders',
        headers := '{"Content-Type": "application/json"}'::jsonb,
        body := '{}'::jsonb
      ) $$

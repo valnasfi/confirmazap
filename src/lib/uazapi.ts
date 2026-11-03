@@ -15,7 +15,7 @@ export async function uazapi(path: string, o: Call = {}) {
   const res = await fetch(`${baseUrl()}${path}`, {
     method: o.method ?? (o.body !== undefined ? "POST" : "GET"),
     headers,
-    body: o.body !== undefined ? JSON.stringify(o.body) : undefined,
+    body: o.body !== undefined ? JSON.stringify(o.body) : null,
   });
   const text = await res.text();
   let json: any = {};
