@@ -28,6 +28,7 @@ select cron.schedule(
   $$ select net.http_post(
        url := 'https://reservapix.vip/api/cron/reactivation',
        headers := '{"Content-Type": "application/json"}'::jsonb,
-       body := '{}'::jsonb
+       body := '{}'::jsonb,
+       timeout_milliseconds := 30000
      ) $$
 );
