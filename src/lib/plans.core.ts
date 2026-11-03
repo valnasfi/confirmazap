@@ -28,9 +28,11 @@ export async function getEntitlements(admin: Admin, businessId: string): Promise
     if (!s) return trial({ status: "none" });
 
     const now = Date.now();
-    const trialEnd = s.trial_ends_at ? new Date(asUtc(s.trial_ends_at)).getTime() : null;
-    const periodEnd = s.current_period_end ? new Date(asUtc(s.current_period_end)).getTime() : null;
-    const iso = { trialEndsAt: s.trial_ends_at ? new Date(trialEnd!).toISOString() : null, periodEnd: s.current_period_end ? new Date(periodEnd!).toISOString() : null };
+    // Datas com ano absurdo (ex.: 0006, digitado pela metade no admin) são ignoradas, em vez de dar o plano como vencido.
+    const sane = (v: unknown) => { if (!v) return null; const t = new Date(asUtc(v)).getTime(); return Number.isFinite(t) && t >= Date.UTC(2020, 0, 1) ? t : null; };
+    const trialEnd = sane(s.trial_ends_at);
+    const periodEnd = sane(s.current_period_end);
+    const iso = { trialEndsAt: trialEnd !== null ? new Date(trialEnd).toISOString() : null, periodEnd: periodEnd !== null ? new Date(periodEnd).toISOString() : null };
     const planKey = s.plan === "starter" || s.plan === "pro" ? (s.plan as "starter" | "pro") : null;
 
     if (planKey && (s.status === "active" || s.status === "past_due" || s.status === "canceled")) {

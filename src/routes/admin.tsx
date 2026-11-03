@@ -297,6 +297,9 @@ function SubRow({ r, reload }: { r: BizRow; reload: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
 
   const save = async () => {
+    // O campo de data aceita anos digitados pela metade (ex.: 0006), que deixavam o plano "vencido".
+    const okYear = (v: string) => !v || (/^\d{4}-/.test(v) && Number(v.slice(0, 4)) >= 2020 && Number(v.slice(0, 4)) <= 2100);
+    if (!okYear(trial) || !okYear(period)) { toast.error("Confira o ano das datas (use algo como 2026)."); return; }
     setBusy(true);
     const { error } = await supabase.from("subscriptions").upsert(
       { business_id: r.id, plan, status, price: Number(price.replace(",", ".")) || 0, trial_ends_at: fromInputDate(trial), current_period_end: fromInputDate(period), updated_at: new Date().toISOString() },
@@ -322,8 +325,8 @@ function SubRow({ r, reload }: { r: BizRow; reload: () => Promise<void> }) {
         </select>
       </td>
       <td className="p-3"><Input className="w-28" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} /></td>
-      <td className="p-3"><input type="date" className={selectCls} value={trial} onChange={(e) => setTrial(e.target.value)} /></td>
-      <td className="p-3"><input type="date" className={selectCls} value={period} onChange={(e) => setPeriod(e.target.value)} /></td>
+      <td className="p-3"><input type="date" min="2020-01-01" max="2100-12-31" className={selectCls} value={trial} onChange={(e) => setTrial(e.target.value)} /></td>
+      <td className="p-3"><input type="date" min="2020-01-01" max="2100-12-31" className={selectCls} value={period} onChange={(e) => setPeriod(e.target.value)} /></td>
       <td className="p-3 text-right"><Button size="sm" disabled={busy} onClick={save}>Salvar</Button></td>
     </tr>
   );
