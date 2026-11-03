@@ -7,6 +7,7 @@ import { siteUrl, toWaNumber, firstName } from "./manage.core";
 import { uazapi } from "./uazapi";
 import { DEFAULT_NOSHOW_MESSAGE } from "./birthday";
 import { sendBookingConfirmed } from "./booking-notify";
+import { reconcilePending } from "./payments.core";
 
 // Profissionais ativos do negócio. Sem a tabela (SQL ainda não rodado) ou sem nenhum, a agenda vale para o negócio todo.
 async function activePros(admin: ReturnType<typeof getSupabaseAdmin>, businessId: string) {
@@ -247,8 +248,14 @@ export const getBookingStatus = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ appointmentId: z.string().uuid() }).parse(i))
   .handler(async ({ data }) => {
     const admin = getSupabaseAdmin();
-    const { data: a } = await admin.from("appointments").select("status,deposit_paid,created_at,manage_token").eq("id", data.appointmentId).maybeSingle();
+    const cols = "id,business_id,asaas_payment_id,status,deposit_paid,created_at,manage_token";
+    let { data: a } = await admin.from("appointments").select(cols).eq("id", data.appointmentId).maybeSingle();
     if (!a) throw new Error("Agendamento não encontrado");
+    // Enquanto a página espera o Pix, confere direto no Asaas: não depende do aviso (webhook) chegar.
+    if (a.status === "pending" && await reconcilePending(admin, a as any)) {
+      ({ data: a } = await admin.from("appointments").select(cols).eq("id", data.appointmentId).maybeSingle());
+      if (!a) throw new Error("Agendamento não encontrado");
+    }
     const expired = a.status === "pending" && new Date(asUtc(a.created_at)).getTime() < Date.now() - HOLD_MINUTES * 60_000;
     return { status: a.status as string, paid: a.deposit_paid === true, expired, manageToken: (a.manage_token as string | null) ?? null };
   });
