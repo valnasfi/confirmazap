@@ -200,10 +200,10 @@ function Config() {
           ))}
         </div>
         <div className="mt-4 grid gap-2 sm:grid-cols-5">
-          <Input className="sm:col-span-2" placeholder="Nome do serviço" value={n.name} onChange={(e) => setN({ ...n, name: e.target.value })} />
-          <Input type="number" placeholder="Minutos" value={n.duration} onChange={(e) => setN({ ...n, duration: e.target.value })} />
-          <Input type="number" step="0.01" placeholder="Preço (R$)" value={n.price} onChange={(e) => setN({ ...n, price: e.target.value })} />
-          <Input type="number" step="0.01" placeholder="Sinal (R$)" value={n.deposit} onChange={(e) => setN({ ...n, deposit: e.target.value })} />
+          <label className="text-xs text-muted-foreground sm:col-span-2">Nome do serviço<Input className="mt-1 text-foreground" placeholder="Ex.: Corte masculino" value={n.name} onChange={(e) => setN({ ...n, name: e.target.value })} /></label>
+          <label className="text-xs text-muted-foreground">Duração (minutos)<Input className="mt-1 text-foreground" type="number" placeholder="Minutos" value={n.duration} onChange={(e) => setN({ ...n, duration: e.target.value })} /></label>
+          <label className="text-xs text-muted-foreground">Preço (R$)<Input className="mt-1 text-foreground" type="number" step="0.01" placeholder="Preço (R$)" value={n.price} onChange={(e) => setN({ ...n, price: e.target.value })} /></label>
+          <label className="text-xs text-muted-foreground">Sinal (R$)<Input className="mt-1 text-foreground" type="number" step="0.01" placeholder="Sinal (R$)" value={n.deposit} onChange={(e) => setN({ ...n, deposit: e.target.value })} /></label>
         </div>
         <Button className="mt-3" disabled={!n.name || !n.price} onClick={add}>Adicionar serviço</Button>
       </section>
