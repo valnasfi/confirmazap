@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSupabaseAdmin } from "./supabaseAdmin";
 import { uazapi } from "./uazapi";
 import { firstName, toWaNumber } from "./manage.core";
+import { sendCanceledByBusiness } from "./booking-notify";
 
 function asaasBase() {
   return process.env["ASAAS_ENV"] === "production" ? "https://api.asaas.com/v3" : "https://api-sandbox.asaas.com/v3";
@@ -70,10 +71,11 @@ export const cancelByOwner = createServerFn({ method: "POST" })
     const { data: a } = await admin.from("appointments").select("id,status,deposit_paid,businesses(owner_id)").eq("id", data.appointmentId).maybeSingle();
     const ap = a as any;
     if (!ap || ap.businesses?.owner_id !== u.user.id) throw new Error("Sem permissão");
-    if (ap.status === "canceled") return { ok: true as const, refund: false };
+    if (ap.status === "canceled") return { ok: true as const, refund: false, notified: false, notifyReason: "" };
     const { error } = await admin.from("appointments").update({ status: "canceled" }).eq("id", ap.id).in("status", ["pending", "confirmed"]);
     if (error) throw new Error(error.message);
     const refund = ap.deposit_paid === true;
     if (refund) await admin.from("payments").update({ status: "refund_needed" }).eq("appointment_id", ap.id).eq("status", "paid");
-    return { ok: true as const, refund };
+    const n = await sendCanceledByBusiness(admin, ap.id, refund);
+    return { ok: true as const, refund, notified: n.sent, notifyReason: n.reason };
   });

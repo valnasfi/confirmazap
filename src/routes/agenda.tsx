@@ -52,8 +52,9 @@ function Agenda() {
     setBusy(true);
     try {
       const r = await cancelByOwner({ data: { appointmentId: sel.id, accessToken: session.access_token } });
-      if (r.refund) toast.warning("Cancelado. O sinal já estava pago: devolva em Cobranças > Devolver sinal.");
-      else toast.success("Agendamento cancelado");
+      const aviso = r.notified ? " Cliente avisado no WhatsApp." : r.notifyReason ? ` Cliente NÃO avisado: ${r.notifyReason}.` : "";
+      if (r.refund) toast.warning(`Cancelado. O sinal já estava pago: devolva em Cobranças > Devolver sinal.${aviso}`);
+      else toast.success(`Agendamento cancelado.${aviso}`);
       setSel(null); load();
     } catch (e) { toast.error((e as Error).message); }
     setBusy(false);
