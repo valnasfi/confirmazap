@@ -109,7 +109,7 @@ function PhoneMock() {
           <div className="text-xs"><b className="block text-sm">Barbearia do Zé</b>online</div>
         </div>
         <div className="space-y-2.5">
-          <div className={`${bubble} bg-white`}>Olá, Ana! Lembrete: amanhã às <b>15:00</b>, Corte com o Zé. ✂️<br />Para confirmar, remarcar ou cancelar, toque no link:<br /><u>reservapix.vip/agendamento/…</u></div>
+          <div className={`${bubble} bg-white`}>Olá, Ana! Lembrete: amanhã às <b>15:00</b>, Corte com o Zé. ✂️<br />Para confirmar, remarcar ou cancelar, toque no link:<br /><u>https://reservapix.vip/agendamento/…</u></div>
                     <div className="mt-4 rounded-xl bg-primary/10 p-3 text-center text-[11px] font-semibold text-primary">
             <CalendarCheck className="mx-auto mb-1 h-4 w-4" />Presença confirmada na sua agenda
           </div>
