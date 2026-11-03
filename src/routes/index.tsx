@@ -43,7 +43,7 @@ function Index() {
       <Footer />
       {/* Barra fixa no celular: o botão de cadastro sempre à mão */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-ink/95 p-3 backdrop-blur md:hidden">
-        <a href={SIGNUP} className={`${cta} w-full`}>Testar grátis por {TRIAL_DAYS} dias</a>
+        <a href={SIGNUP} className={`${cta} w-full`}>Quero testar no meu negócio</a>
       </div>
     </div>
   );
@@ -84,7 +84,7 @@ function Hero() {
             Seu cliente agenda pelo link, paga um sinal por Pix para garantir o horário e recebe lembrete no WhatsApp. Ele confirma ou cancela respondendo uma mensagem. Você para de perder dinheiro com cadeira vazia.
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <a href={SIGNUP} className={cta}>Começar grátis por {TRIAL_DAYS} dias <ArrowRight className="h-5 w-5" /></a>
+            <a href={SIGNUP} className={cta}>Quero testar no meu negócio <ArrowRight className="h-5 w-5" /></a>
             <a href="#como-funciona" className={ghost}>Ver como funciona</a>
           </div>
           <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm opacity-80">
@@ -299,7 +299,7 @@ function FinalCta() {
       <div className="mx-auto max-w-2xl">
         <h2 className="font-display text-3xl font-bold md:text-5xl">Sua próxima agenda cheia começa hoje</h2>
         <p className="mt-4 text-lg opacity-80">Crie sua conta, conecte o WhatsApp e compartilhe o link. Em poucos minutos seus clientes já podem agendar com sinal e lembrete.</p>
-        <a href={SIGNUP} className={`${cta} mt-8`}>Começar grátis por {TRIAL_DAYS} dias <ArrowRight className="h-5 w-5" /></a>
+        <a href={SIGNUP} className={`${cta} mt-8`}>Quero testar no meu negócio <ArrowRight className="h-5 w-5" /></a>
       </div>
     </section>
   );
@@ -310,7 +310,7 @@ function Footer() {
     <footer className="bg-ink px-5 pb-24 pt-10 text-ink-foreground md:pb-10">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-sm opacity-80 md:flex-row">
         <Logo light />
-        <p>© {new Date().getFullYear()} ConfirmaZap. Todos os direitos reservados.</p>
+        <p className="text-center">Feito em Fortaleza, CE | VNF Digital | Suporte no WhatsApp</p>
         <a href="/login" className="hover:opacity-100">Entrar</a>
       </div>
     </footer>

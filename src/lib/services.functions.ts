@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getSupabaseAdmin } from "./supabaseAdmin";
 import { getEntitlements, getUsage } from "./plans.core";
 
-// Cadastro de serviço pelo servidor, para o limite do plano valer de verdade (Starter: 5 serviços).
+// Cadastro de serviço pelo servidor, para o limite do plano valer de verdade (Starter: 15 serviços).
 export const addService = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
