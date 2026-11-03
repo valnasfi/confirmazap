@@ -1,4 +1,4 @@
--- ConfirmaZap - quais profissionais fazem cada serviço
+-- ReservaPix - quais profissionais fazem cada serviço
 -- Rode UMA vez no Supabase SQL Editor (depois do supabase-profissionais.sql).
 -- Serviço sem nenhum profissional marcado = todos os profissionais fazem.
 create table if not exists public.professional_services (

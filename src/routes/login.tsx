@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/AppShell";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Entrar — ConfirmaZap" }, { name: "description", content: "Acesse o painel do ConfirmaZap." }, { property: "og:title", content: "Entrar — ConfirmaZap" }, { property: "og:description", content: "Acesse o painel do ConfirmaZap." }] }),
+  head: () => ({ meta: [{ title: "Entrar — ReservaPix" }, { name: "description", content: "Acesse o painel do ReservaPix." }, { property: "og:title", content: "Entrar — ReservaPix" }, { property: "og:description", content: "Acesse o painel do ReservaPix." }] }),
   component: Login,
 });
 

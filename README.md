@@ -1,4 +1,4 @@
-# Confirmazap
+# ReservaPix
 
 Implement exactly the screenshot and nothing else
 

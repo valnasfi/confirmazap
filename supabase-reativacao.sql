@@ -1,4 +1,4 @@
--- ConfirmaZap - reativar clientes sumidos + opção SAIR
+-- ReservaPix - reativar clientes sumidos + opção SAIR
 -- Rode UMA vez no Supabase SQL Editor (depois do supabase-lembretes.sql).
 
 -- 1) Quem respondeu SAIR não recebe aniversário nem "sentimos sua falta"

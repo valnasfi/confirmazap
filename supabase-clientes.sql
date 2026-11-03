@@ -1,4 +1,4 @@
--- ConfirmaZap - clientes sem duplicidade + cadastro completo
+-- ReservaPix - clientes sem duplicidade + cadastro completo
 -- Rode UMA vez no Supabase SQL Editor.
 
 -- 1) Campos novos do cadastro do cliente

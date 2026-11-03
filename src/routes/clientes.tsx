@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/clientes")({
-  head: () => ({ meta: [{ title: "Clientes — ConfirmaZap" }, { name: "description", content: "Cadastro e histórico dos seus clientes." }, { property: "og:title", content: "Clientes — ConfirmaZap" }, { property: "og:description", content: "Cadastro e histórico dos seus clientes." }] }),
+  head: () => ({ meta: [{ title: "Clientes — ReservaPix" }, { name: "description", content: "Cadastro e histórico dos seus clientes." }, { property: "og:title", content: "Clientes — ReservaPix" }, { property: "og:description", content: "Cadastro e histórico dos seus clientes." }] }),
   component: () => <AppShell><Clientes /></AppShell>,
 });
 

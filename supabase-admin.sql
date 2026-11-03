@@ -1,4 +1,4 @@
--- ConfirmaZap - painel de super admin
+-- ReservaPix - painel de super admin
 -- Rode no Supabase SQL Editor DEPOIS do supabase.sql.
 -- Depois de rodar, cadastre seu usuário como admin (veja o final deste arquivo).
 
@@ -179,7 +179,7 @@ grant execute on function public.admin_overview() to authenticated;
 grant execute on function public.admin_list_businesses() to authenticated;
 grant execute on function public.admin_set_business_status(uuid, boolean, text) to authenticated;
 
--- 5) Depois de rodar tudo acima (e depois de criar a conta no ConfirmaZap com este
+-- 5) Depois de rodar tudo acima (e depois de criar a conta no ReservaPix com este
 -- e-mail), rode este bloco separado para cadastrar o super admin.
 -- Ele acusa erro se a conta ainda não existir:
 --
@@ -192,6 +192,6 @@ grant execute on function public.admin_set_business_status(uuid, boolean, text) 
 --     select 1 from public.platform_admins p join auth.users u on u.id = p.user_id
 --     where u.email = 'contato@valdinascimento.com.br'
 --   ) then
---     raise exception 'Conta contato@valdinascimento.com.br não encontrada: crie a conta no ConfirmaZap primeiro';
+--     raise exception 'Conta contato@valdinascimento.com.br não encontrada: crie a conta no ReservaPix primeiro';
 --   end if;
 -- end $$;

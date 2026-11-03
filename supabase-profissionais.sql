@@ -1,4 +1,4 @@
--- ConfirmaZap - vários profissionais por negócio
+-- ReservaPix - vários profissionais por negócio
 -- Rode UMA vez no Supabase SQL Editor (depois do supabase-lembretes.sql).
 
 -- 1) Profissionais (cada um tem a própria agenda)

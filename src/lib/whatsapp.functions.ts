@@ -121,7 +121,7 @@ export const whatsappSendTest = createServerFn({ method: "POST" })
     let number = (data.number ?? "").replace(/\D/g, "") || (row.phone ?? "");
     if (number.length === 10 || number.length === 11) number = `55${number}`; // número brasileiro sem DDI
     if (number.length < 12) throw new Error("Informe um número com DDD");
-    const r = await uazapi("/send/text", { token: row.instance_token, body: { number, text: `✅ Teste do ConfirmaZap: o WhatsApp de ${business.name} está conectado.` } });
+    const r = await uazapi("/send/text", { token: row.instance_token, body: { number, text: `✅ Teste do ReservaPix: o WhatsApp de ${business.name} está conectado.` } });
     if (!r.ok) throw new Error(`Não foi possível enviar (${r.status}). ${r.json?.error ?? r.json?.message ?? ""}`.trim());
     return { ok: true, number };
   });

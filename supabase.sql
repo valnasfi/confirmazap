@@ -1,4 +1,4 @@
--- ConfirmaZap - rode este arquivo no Supabase SQL Editor
+-- ReservaPix - rode este arquivo no Supabase SQL Editor
 create extension if not exists pgcrypto;
 
 create table if not exists public.businesses (

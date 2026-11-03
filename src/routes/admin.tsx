@@ -9,7 +9,7 @@ import { Logo } from "@/components/AppShell";
 import { brl } from "@/lib/booking";
 
 export const Route = createFileRoute("/admin")({
-  head: () => ({ meta: [{ title: "Admin — ConfirmaZap" }, { name: "description", content: "Gestão da plataforma ConfirmaZap." }, { property: "og:title", content: "Admin — ConfirmaZap" }, { property: "og:description", content: "Gestão da plataforma ConfirmaZap." }] }),
+  head: () => ({ meta: [{ title: "Admin — ReservaPix" }, { name: "description", content: "Gestão da plataforma ReservaPix." }, { property: "og:title", content: "Admin — ReservaPix" }, { property: "og:description", content: "Gestão da plataforma ReservaPix." }] }),
   component: AdminPage,
 });
 

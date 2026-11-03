@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Logo } from "@/components/AppShell";
 
 export const Route = createFileRoute("/agendamento/$token")({
-  head: () => ({ meta: [{ title: "Seu agendamento — ConfirmaZap" }, { name: "robots", content: "noindex" }, { name: "description", content: "Veja, cancele ou remarque o seu horário." }] }),
+  head: () => ({ meta: [{ title: "Seu agendamento — ReservaPix" }, { name: "robots", content: "noindex" }, { name: "description", content: "Veja, cancele ou remarque o seu horário." }] }),
   component: Manage,
 });
 

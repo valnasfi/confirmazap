@@ -14,9 +14,9 @@ const SIGNUP = "/login?modo=cadastro";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ConfirmaZap — Menos faltas na agenda, mais dinheiro no caixa" },
+      { title: "ReservaPix — Menos faltas na agenda, mais dinheiro no caixa" },
       { name: "description", content: "Agendamento online com sinal por Pix, lembretes e confirmação pelo WhatsApp. Pare de perder horário com cliente que não aparece. Teste grátis por 7 dias." },
-      { property: "og:title", content: "ConfirmaZap — Acabe com as faltas na sua agenda" },
+      { property: "og:title", content: "ReservaPix — Acabe com as faltas na sua agenda" },
       { property: "og:description", content: "Sinal por Pix, lembretes no WhatsApp e confirmação por resposta. Teste grátis por 7 dias." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -53,7 +53,7 @@ function Nav() {
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-ink/90 text-ink-foreground backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3">
-        <a href="/" aria-label="ConfirmaZap"><Logo light /></a>
+        <a href="/" aria-label="ReservaPix"><Logo light /></a>
         <nav className="hidden items-center gap-7 text-sm opacity-80 md:flex">
           <a href="#como-funciona" className="hover:opacity-100">Como funciona</a>
           <a href="#recursos" className="hover:opacity-100">Recursos</a>
@@ -146,7 +146,7 @@ function Steps() {
   const steps = [
     { i: CalendarCheck, t: "Cliente agenda pelo seu link", d: "Escolhe serviço, profissional, dia e horário em segundos, sem baixar app nem criar conta." },
     { i: QrCode, t: "Paga o sinal por Pix", d: "O valor do sinal você define em cada serviço. Pagou, o horário está garantido, sozinho." },
-    { i: BellRing, t: "Recebe lembrete e confirma", d: "O ConfirmaZap avisa no WhatsApp antes do horário. O cliente abre o link e confirma, remarca ou cancela em um toque." },
+    { i: BellRing, t: "Recebe lembrete e confirma", d: "O ReservaPix avisa no WhatsApp antes do horário. O cliente abre o link e confirma, remarca ou cancela em um toque." },
     { i: CalendarClock, t: "Você atende, ou reocupa o horário", d: "Quem cancela libera a vaga a tempo. Quem falta recebe um convite automático para remarcar." },
   ];
   return (
@@ -218,7 +218,7 @@ function Calculator() {
         <div className="rounded-3xl border border-white/10 bg-white/5 p-7">
           <p className="text-sm opacity-70">Você deixa de ganhar por mês</p>
           <p className="mt-1 font-display text-5xl font-bold text-accent">{brl(loss)}</p>
-          <p className="mt-5 text-sm opacity-80">Se o ConfirmaZap evitasse só metade dessas faltas, seriam <b className="text-white">{brl(half)}</b> a mais por mês. O plano Pro custa {brl(PLANS.pro.price)}.</p>
+          <p className="mt-5 text-sm opacity-80">Se o ReservaPix evitasse só metade dessas faltas, seriam <b className="text-white">{brl(half)}</b> a mais por mês. O plano Pro custa {brl(PLANS.pro.price)}.</p>
           <p className="mt-2 text-xs opacity-60">Cenário ilustrativo com os números que você digitou. O resultado real depende do seu negócio.</p>
           <a href={SIGNUP} className={`${cta} mt-6 w-full`}>Quero parar de perder esse dinheiro</a>
         </div>

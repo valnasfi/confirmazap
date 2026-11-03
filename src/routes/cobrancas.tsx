@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { brl } from "@/lib/booking";
 
 export const Route = createFileRoute("/cobrancas")({
-  head: () => ({ meta: [{ title: "Cobranças — ConfirmaZap" }, { name: "description", content: "Cobranças de não comparecimento." }, { property: "og:title", content: "Cobranças — ConfirmaZap" }, { property: "og:description", content: "Cobranças de não comparecimento." }] }),
+  head: () => ({ meta: [{ title: "Cobranças — ReservaPix" }, { name: "description", content: "Cobranças de não comparecimento." }, { property: "og:title", content: "Cobranças — ReservaPix" }, { property: "og:description", content: "Cobranças de não comparecimento." }] }),
   component: () => <AppShell><Cobrancas /></AppShell>,
 });
 

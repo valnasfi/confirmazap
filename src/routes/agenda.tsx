@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 const AgendaCalendar = lazy(() => import("@/components/AgendaCalendar"));
 
 export const Route = createFileRoute("/agenda")({
-  head: () => ({ meta: [{ title: "Agenda — ConfirmaZap" }, { name: "description", content: "Agenda do dia e da semana." }, { property: "og:title", content: "Agenda — ConfirmaZap" }, { property: "og:description", content: "Agenda do dia e da semana." }] }),
+  head: () => ({ meta: [{ title: "Agenda — ReservaPix" }, { name: "description", content: "Agenda do dia e da semana." }, { property: "og:title", content: "Agenda — ReservaPix" }, { property: "og:description", content: "Agenda do dia e da semana." }] }),
   component: () => <AppShell><Agenda /></AppShell>,
 });
 

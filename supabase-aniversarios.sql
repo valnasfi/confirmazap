@@ -1,4 +1,4 @@
--- ConfirmaZap - mensagem de aniversário automática
+-- ReservaPix - mensagem de aniversário automática
 -- Rode UMA vez no Supabase SQL Editor (depois do supabase-whatsapp.sql e do supabase-clientes.sql).
 
 -- 1) Registro de quem já recebeu (um por cliente por ano). Fechado ao navegador: só o servidor usa.

@@ -1,4 +1,4 @@
--- ConfirmaZap - conexão do WhatsApp (uazapi)
+-- ReservaPix - conexão do WhatsApp (uazapi)
 -- Rode no Supabase SQL Editor (depois dos outros arquivos .sql).
 -- A tabela guarda o token da instância de cada negócio, por isso fica FECHADA para o navegador:
 -- RLS ligado e nenhuma policy. Só o servidor (service role) lê e escreve.

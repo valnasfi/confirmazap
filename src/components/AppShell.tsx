@@ -28,7 +28,7 @@ export function Logo({ light }: { light?: boolean }) {
   return (
     <span className={`flex items-center gap-2 font-display text-lg font-bold ${light ? "text-ink-foreground" : "text-foreground"}`}>
       <img src="/logo.png" alt="" width={32} height={32} className="h-8 w-8 rounded-full" />
-      ConfirmaZap
+      ReservaPix
     </span>
   );
 }
@@ -104,7 +104,7 @@ function Suspended({ reason }: { reason: string | null }) {
     <div className="grid min-h-screen place-items-center p-6">
       <div className="w-full max-w-md rounded-2xl bg-card p-8 text-center shadow-card">
         <h1 className="text-2xl font-bold">Conta suspensa</h1>
-        <p className="mt-2 text-sm text-muted-foreground">O acesso do seu negócio ao ConfirmaZap está temporariamente bloqueado.</p>
+        <p className="mt-2 text-sm text-muted-foreground">O acesso do seu negócio ao ReservaPix está temporariamente bloqueado.</p>
         {reason && <p className="mt-3 rounded-lg bg-secondary p-3 text-sm">{reason}</p>}
         <p className="mt-3 text-sm text-muted-foreground">Fale com o suporte para regularizar.</p>
         <Button className="mt-5 w-full" variant="outline" onClick={() => supabase.auth.signOut()}>Sair</Button>

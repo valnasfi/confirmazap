@@ -1,4 +1,4 @@
--- ConfirmaZap - cobrança da mensalidade dos planos (Starter e Pro) pelo Asaas
+-- ReservaPix - cobrança da mensalidade dos planos (Starter e Pro) pelo Asaas
 -- Rode UMA vez no Supabase SQL Editor (depois do supabase-admin.sql).
 
 alter table public.subscriptions add column if not exists asaas_subscription_id text;

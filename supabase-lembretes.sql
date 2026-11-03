@@ -1,4 +1,4 @@
--- ConfirmaZap - lembretes por WhatsApp, confirmação por resposta e link para cancelar/remarcar
+-- ReservaPix - lembretes por WhatsApp, confirmação por resposta e link para cancelar/remarcar
 -- Rode UMA vez no Supabase SQL Editor (depois do supabase-whatsapp.sql e do supabase-aniversarios.sql).
 
 -- 1) Cada agendamento ganha um link secreto próprio (usado em /agendamento/<token>)

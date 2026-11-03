@@ -14,7 +14,7 @@ async function platformAsaas(path: string, method: "GET" | "POST" | "DELETE", bo
   if (!key) throw new Error("A cobrança dos planos ainda não foi ativada pela plataforma (falta PLATFORM_ASAAS_API_KEY).");
   const res = await fetch(base() + path, {
     method,
-    headers: { "Content-Type": "application/json", access_token: key, "User-Agent": "ConfirmaZap" },
+    headers: { "Content-Type": "application/json", access_token: key, "User-Agent": "ReservaPix" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const json = await res.json().catch(() => ({}));
@@ -78,7 +78,7 @@ export const subscribePlan = createServerFn({ method: "POST" })
       value: PLANS[plan].price,
       nextDueDate,
       cycle: "MONTHLY",
-      description: `ConfirmaZap ${PLANS[plan].name}`,
+      description: `ReservaPix ${PLANS[plan].name}`,
       externalReference: `biz:${business.id}`,
     });
 

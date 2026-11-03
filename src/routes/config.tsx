@@ -21,7 +21,7 @@ import { ProfessionalsManager } from "@/components/ProfessionalsManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/config")({
-  head: () => ({ meta: [{ title: "Configurações — ConfirmaZap" }, { name: "description", content: "Serviços, regras e integrações." }, { property: "og:title", content: "Configurações — ConfirmaZap" }, { property: "og:description", content: "Serviços, regras e integrações." }] }),
+  head: () => ({ meta: [{ title: "Configurações — ReservaPix" }, { name: "description", content: "Serviços, regras e integrações." }, { property: "og:title", content: "Configurações — ReservaPix" }, { property: "og:description", content: "Serviços, regras e integrações." }] }),
   component: () => <AppShell><Config /></AppShell>,
 });
 

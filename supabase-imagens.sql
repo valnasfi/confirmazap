@@ -1,4 +1,4 @@
--- ConfirmaZap - logo e banner do negócio
+-- ReservaPix - logo e banner do negócio
 -- Rode no Supabase SQL Editor (depois do supabase.sql e do supabase-admin.sql).
 
 -- 1) Coluna do banner e permissões (o logo já existe: logo_url)

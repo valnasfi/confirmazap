@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Logo } from "@/components/AppShell";
 
 export const Route = createFileRoute("/agendar/$slug")({
-  head: () => ({ meta: [{ title: "Agendar horário — ConfirmaZap" }, { name: "description", content: "Escolha o serviço e o horário e confirme seu agendamento." }, { property: "og:title", content: "Agende seu horário" }, { property: "og:description", content: "Agendamento online com confirmação via Pix." }] }),
+  head: () => ({ meta: [{ title: "Agendar horário — ReservaPix" }, { name: "description", content: "Escolha o serviço e o horário e confirme seu agendamento." }, { property: "og:title", content: "Agende seu horário" }, { property: "og:description", content: "Agendamento online com confirmação via Pix." }] }),
   component: Booking,
 });
 

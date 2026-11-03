@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { brl, activeHoldFilter, asUtc } from "@/lib/booking";
 
 export const Route = createFileRoute("/dashboard")({
-  head: () => ({ meta: [{ title: "Painel — ConfirmaZap" }, { name: "description", content: "Resumo do dia e das faltas." }, { property: "og:title", content: "Painel — ConfirmaZap" }, { property: "og:description", content: "Resumo do dia e das faltas." }] }),
+  head: () => ({ meta: [{ title: "Painel — ReservaPix" }, { name: "description", content: "Resumo do dia e das faltas." }, { property: "og:title", content: "Painel — ReservaPix" }, { property: "og:description", content: "Resumo do dia e das faltas." }] }),
   component: () => <AppShell><Dashboard /></AppShell>,
 });
 
