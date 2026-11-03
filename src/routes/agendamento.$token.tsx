@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { generateSlots, isOpenDay, minAdvanceMs } from "@/lib/booking";
+import { minAdvanceMs } from "@/lib/booking";
+import { generateSlotsFor, isDayOpen, readSchedule, type Schedule } from "@/lib/schedule";
+import { getSchedule } from "@/lib/schedule.functions";
 import { getBusySlots } from "@/lib/asaas.functions";
 import { cancelByToken, confirmByToken, getManage, rescheduleByToken } from "@/lib/manage.functions";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,7 @@ const fmt = (iso: string) => new Date(iso).toLocaleString("pt-BR", { dateStyle: 
 function Manage() {
   const { token } = Route.useParams();
   const [info, setInfo] = useState<Info | null>(null);
+  const [sch, setSch] = useState<Schedule>(readSchedule(null));
   const [error, setError] = useState("");
   const [mode, setMode] = useState<"view" | "cancel" | "reschedule" | "done">("view");
   const [doneMsg, setDoneMsg] = useState("");
@@ -30,12 +33,13 @@ function Manage() {
 
   const load = () => getManage({ data: { token } }).then(setInfo).catch((e) => setError((e as Error).message));
   useEffect(() => { load(); }, [token]);
+  useEffect(() => { if (info?.businessId) getSchedule({ data: { businessId: info.businessId } }).then((x) => setSch(x as Schedule)).catch(() => {}); }, [info?.businessId]);
 
   const days = useMemo(() => {
     const out: Date[] = []; const d = new Date(); d.setHours(0, 0, 0, 0);
-    while (out.length < 12) { if (isOpenDay(d)) out.push(new Date(d)); d.setDate(d.getDate() + 1); }
+    for (let i = 0; out.length < 12 && i < 120; i++) { if (isDayOpen(d, sch)) out.push(new Date(d)); d.setDate(d.getDate() + 1); }
     return out;
-  }, []);
+  }, [sch]);
 
   useEffect(() => {
     if (!info || !day) return;
@@ -43,7 +47,7 @@ function Manage() {
     getBusySlots({ data: { businessId: info.businessId, from: day.toISOString(), to: to.toISOString(), professionalId: info.professionalId } }).then(setBusySlots).catch(() => setBusySlots([]));
   }, [info, day]);
 
-  const slots = useMemo(() => (day && info ? generateSlots(day, info.durationMinutes, busySlots).filter((s) => s.getTime() > Date.now() + minAdvanceMs()) : []), [day, info, busySlots]);
+  const slots = useMemo(() => (day && info ? generateSlotsFor(day, info.durationMinutes, busySlots, sch).filter((s) => s.getTime() > Date.now() + minAdvanceMs()) : []), [day, info, busySlots]);
 
   const doConfirm = async () => {
     setBusy(true);

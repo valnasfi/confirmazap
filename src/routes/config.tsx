@@ -16,6 +16,7 @@ import { RemindersSettings } from "@/components/RemindersSettings";
 import { ReactivationSettings } from "@/components/ReactivationSettings";
 import { NoShowSettings } from "@/components/NoShowSettings";
 import { PlanBilling } from "@/components/PlanBilling";
+import { ScheduleSettings } from "@/components/ScheduleSettings";
 import { addService } from "@/lib/services.functions";
 import { ProfessionalsManager } from "@/components/ProfessionalsManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -123,6 +124,7 @@ function Config() {
       <Tabs defaultValue="negocio">
         <TabsList className="h-auto w-full justify-start overflow-x-auto">
           <TabsTrigger value="negocio">Negócio e regras</TabsTrigger>
+          <TabsTrigger value="horarios">Horários</TabsTrigger>
           <TabsTrigger value="servicos">Serviços</TabsTrigger>
           <TabsTrigger value="profissionais">Profissionais</TabsTrigger>
           <TabsTrigger value="identidade">Identidade visual</TabsTrigger>
@@ -151,6 +153,10 @@ function Config() {
           <ReactivationSettings />
 
           <Button size="lg" onClick={saveBiz}>Salvar configurações</Button>
+        </TabsContent>
+
+        <TabsContent value="horarios" className="mt-6">
+          <ScheduleSettings />
         </TabsContent>
 
         <TabsContent value="servicos" className="mt-6 space-y-6">

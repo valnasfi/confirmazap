@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSupabaseAdmin } from "./supabaseAdmin";
 import { MIN_ADVANCE_HOURS, activeHoldFilter, minAdvanceMs } from "./booking";
+import { readSchedule, slotAllowed } from "./schedule";
 import { asUtc, cancelAppointment, cancelHoursOf, withinFreeWindow } from "./manage.core";
 
 // Página pública /agendamento/<token>: o cliente vê, cancela ou remarca o próprio horário.
@@ -69,7 +70,10 @@ export const rescheduleByToken = createServerFn({ method: "POST" })
     const start = new Date(data.newStartAt);
     if (Number.isNaN(start.getTime()) || start.getTime() < Date.now()) throw new Error("Horário inválido. Escolha outro.");
     if (start.getTime() < Date.now() + minAdvanceMs()) throw new Error(`Só é possível remarcar com pelo menos ${MIN_ADVANCE_HOURS} horas de antecedência. Escolha outro horário.`);
-    const end = new Date(start.getTime() + Number(a.services?.duration_minutes ?? 60) * 60000);
+    const dur = Number(a.services?.duration_minutes ?? 60);
+    const sch = readSchedule(a.businesses?.settings);
+    if (!slotAllowed(start.getTime(), dur, sch)) throw new Error(sch.paused ? "A agenda deste negócio está fechada no momento." : "O estabelecimento não atende nesse horário. Escolha outro.");
+    const end = new Date(start.getTime() + dur * 60000);
 
     let clashQuery = admin
       .from("appointments").select("id")

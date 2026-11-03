@@ -5,6 +5,8 @@ import { AppShell, useBiz, statusMeta } from "@/components/AppShell";
 import { supabase } from "@/lib/supabaseClient";
 import { chargeNoShow } from "@/lib/asaas.functions";
 import { cancelByOwner } from "@/lib/refund.functions";
+import { CloseAgendaDialog } from "@/components/ScheduleSettings";
+import { readSchedule, toHHMM, toMin } from "@/lib/schedule";
 import { activeHoldFilter, asUtc } from "@/lib/booking";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -75,11 +77,29 @@ function Agenda() {
     title: `${proNames.length > 1 && a.professionals?.name ? `${a.professionals.name} — ` : ""}${a.customers?.name ?? ""} · ${a.services?.name ?? ""}`,
     backgroundColor: statusMeta[a.status]?.color, borderColor: statusMeta[a.status]?.color,
   }));
+  // Janela do calendário: do funcionamento da empresa, ampliada se já houver agendamentos fora dele; dias fechados ficam escondidos (a menos que tenham agendamentos).
+  const sched = readSchedule(business.settings);
+  const apptMins = items.map((a) => { const d = new Date(asUtc(a.start_at)); return d.getHours() * 60 + d.getMinutes(); });
+  const apptEnds = items.map((a) => { const d = new Date(asUtc(a.end_at)); return d.getHours() * 60 + d.getMinutes() || 24 * 60; });
+  const openHours = sched.hours.filter((h) => h.open);
+  const minM = Math.min(...openHours.map((h) => toMin(h.from)), ...apptMins, 8 * 60 * (openHours.length ? 99 : 1));
+  const maxM = Math.max(...openHours.map((h) => toMin(h.to)), ...apptEnds, 0);
+  const slotMin = `${toHHMM(Math.floor((Number.isFinite(minM) && minM < 24 * 60 ? minM : 8 * 60) / 60) * 60)}:00`;
+  const slotMax = `${toHHMM(Math.min(24 * 60, Math.ceil((maxM || 19 * 60) / 60) * 60))}:00`;
+  const apptDays = new Set(items.map((a) => new Date(asUtc(a.start_at)).getDay()));
+  const hiddenDays = sched.hours.map((h, d) => (!h.open && !apptDays.has(d) ? d : -1)).filter((d) => d >= 0);
+  const closedEvents = readSchedule(business.settings).blocks.map((b) => {
+    const nextDay = new Date(`${b.end}T00:00:00Z`); nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+    const whole = !b.from || !b.to;
+    return whole
+      ? { id: `blk-${b.id}`, start: b.start, end: nextDay.toISOString().slice(0, 10), allDay: true, display: "background", backgroundColor: "#9ca3af55", title: b.reason ?? "Fechado" }
+      : { id: `blk-${b.id}`, start: `${b.start}T${b.from}:00`, end: `${b.end}T${b.to}:00`, display: "background", backgroundColor: "#9ca3af55", title: b.reason ?? "Fechado" };
+  });
   const wa = sel?.customers?.whatsapp ? `https://wa.me/55${sel.customers.whatsapp}?text=${encodeURIComponent(`Olá ${sel.customers.name}! Lembrete do seu horário em ${business.name}: ${new Date(asUtc(sel.start_at)).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}.`)}` : "#";
 
   return (
     <div>
-      <h1 className="text-3xl font-bold">Agenda</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-3xl font-bold">Agenda</h1><CloseAgendaDialog /></div>
       {proNames.length > 1 && (
         <select className="mt-4 rounded-md border bg-background px-3 py-2 text-sm" aria-label="Filtrar por profissional" value={proFilter} onChange={(e) => setProFilter(e.target.value)}>
           <option value="">Todos os profissionais</option>
@@ -89,7 +109,7 @@ function Agenda() {
       <div className="mt-6 rounded-2xl bg-card p-4 shadow-card">
         <ClientOnly fallback={<p className="p-6 text-muted-foreground">Carregando agenda…</p>}>
           <Suspense fallback={<p className="p-6 text-muted-foreground">Carregando agenda…</p>}>
-            <AgendaCalendar events={events} onClick={(id) => setSel(items.find((i) => i.id === id) ?? null)} />
+            <AgendaCalendar slotMin={slotMin} slotMax={slotMax.startsWith("24") ? "24:00:00" : slotMax} hiddenDays={hiddenDays.length >= 7 ? [] : hiddenDays} events={[...events, ...closedEvents]} onClick={(id) => setSel(items.find((i) => i.id === id) ?? null)} />
           </Suspense>
         </ClientOnly>
       </div>

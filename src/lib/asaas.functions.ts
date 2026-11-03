@@ -8,6 +8,7 @@ import { uazapi } from "./uazapi";
 import { DEFAULT_NOSHOW_MESSAGE } from "./birthday";
 import { sendBookingConfirmed } from "./booking-notify";
 import { reconcilePending } from "./payments.core";
+import { readSchedule, slotAllowed } from "./schedule";
 
 // Profissionais ativos do negócio. Sem a tabela (SQL ainda não rodado) ou sem nenhum, a agenda vale para o negócio todo.
 async function activePros(admin: ReturnType<typeof getSupabaseAdmin>, businessId: string) {
@@ -107,7 +108,7 @@ export const createBooking = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }): Promise<BookingResult> => {
     const admin = getSupabaseAdmin();
-    const { data: biz } = await admin.from("businesses").select("id,name,asaas_api_key,status").eq("id", data.businessId).single();
+    const { data: biz } = await admin.from("businesses").select("id,name,asaas_api_key,status,settings").eq("id", data.businessId).single();
     const { data: svc } = await admin.from("services").select("*").eq("id", data.serviceId).eq("business_id", data.businessId).eq("active", true).single();
     if (!biz || !svc) throw new Error("Serviço não encontrado");
     if (biz.status === "suspended") throw new Error("Este negócio está temporariamente indisponível.");
@@ -127,6 +128,8 @@ export const createBooking = createServerFn({ method: "POST" })
     const start = new Date(data.startAt);
     if (Number.isNaN(start.getTime()) || start.getTime() < Date.now()) throw new Error("Horário inválido. Escolha outro.");
     if (start.getTime() < Date.now() + minAdvanceMs()) throw new Error(`Só é possível agendar com pelo menos ${MIN_ADVANCE_HOURS} horas de antecedência. Escolha outro horário.`);
+    const sch = readSchedule(biz.settings);
+    if (!slotAllowed(start.getTime(), svc.duration_minutes, sch)) throw new Error(sch.paused ? "A agenda deste negócio está fechada no momento." : "O estabelecimento não atende nesse horário. Escolha outro.");
     const end = new Date(start.getTime() + svc.duration_minutes * 60000);
     // Quem atende: o profissional escolhido ou, sem preferência, o primeiro livre naquele horário.
     const allPros = await activePros(admin, biz.id);

@@ -3,7 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Copy } from "lucide-react";
 import { supabase, type Business, type Service } from "@/lib/supabaseClient";
-import { generateSlots, isOpenDay, maskWhatsapp, brl, HOLD_MINUTES, minAdvanceMs } from "@/lib/booking";
+import { maskWhatsapp, brl, HOLD_MINUTES, minAdvanceMs } from "@/lib/booking";
+import { generateSlotsFor, isDayOpen, readSchedule, type Schedule } from "@/lib/schedule";
+import { getSchedule } from "@/lib/schedule.functions";
 
 type Pro = { id: string; name: string };
 import { getBusySlots, createBooking, getBookingStatus } from "@/lib/asaas.functions";
@@ -22,6 +24,7 @@ function Booking() {
   const [biz, setBiz] = useState<Business | null | undefined>(undefined);
   const [services, setServices] = useState<Service[]>([]);
   const [svc, setSvc] = useState<Service | null>(null);
+  const [sch, setSch] = useState<Schedule>(readSchedule(null));
   const [pros, setPros] = useState<Pro[]>([]);
   // "any" = sem preferência; só aparece a escolha quando há mais de um profissional.
   const [pro, setPro] = useState<Pro | "any" | null>(null);
@@ -52,6 +55,7 @@ function Booking() {
       if (error) ({ data: b } = await supabase.from("businesses").select("id,name,slug,whatsapp,logo_url").eq("slug", slug).maybeSingle());
       setBiz(b as Business | null);
       if (b) {
+        getSchedule({ data: { businessId: b.id } }).then((x) => setSch(x as Schedule)).catch(() => {});
         const { data: s } = await supabase.from("services").select("*").eq("business_id", b.id).eq("active", true).order("name");
         setServices((s as Service[]) ?? []);
         // professionals só existe depois do SQL dos profissionais: sem ele, a agenda é única como antes.
@@ -71,9 +75,9 @@ function Booking() {
 
   const days = useMemo(() => {
     const out: Date[] = []; const d = new Date(); d.setHours(0, 0, 0, 0);
-    while (out.length < 12) { if (isOpenDay(d)) out.push(new Date(d)); d.setDate(d.getDate() + 1); }
+    for (let i = 0; out.length < 12 && i < 120; i++) { if (isDayOpen(d, sch)) out.push(new Date(d)); d.setDate(d.getDate() + 1); }
     return out;
-  }, []);
+  }, [sch]);
 
   useEffect(() => {
     if (!biz || !day) return;
@@ -99,7 +103,7 @@ function Booking() {
     return () => { stop = true; clearInterval(id); };
   }, [result, paid, expired]);
 
-  const slots = useMemo(() => (day && svc ? generateSlots(day, svc.duration_minutes, busy).filter((s) => s.getTime() > Date.now() + minAdvanceMs()) : []), [day, svc, busy]);
+  const slots = useMemo(() => (day && svc ? generateSlotsFor(day, svc.duration_minutes, busy, sch).filter((s) => s.getTime() > Date.now() + minAdvanceMs()) : []), [day, svc, busy]);
 
   const confirm = async () => {
     if (!biz || !svc || !slot) return;
@@ -158,6 +162,7 @@ function Booking() {
             </>)}
           </div>
         ) : (<>
+          {sch.paused && <section className="rounded-2xl bg-card p-5 text-center shadow-card"><h2 className="font-semibold">Agenda fechada no momento</h2><p className="mt-1 text-sm text-muted-foreground">Este estabelecimento não está aceitando agendamentos agora. Tente novamente mais tarde.</p></section>}
           <section className="rounded-2xl bg-card p-5 shadow-card">
             <h2 className="font-semibold">1. Serviço</h2>
             <div className="mt-3 grid gap-2">
