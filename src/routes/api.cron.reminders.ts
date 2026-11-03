@@ -14,10 +14,10 @@ const MAX_PER_RUN = 80;
 
 type RemindersCfg = { enabled?: boolean; h24?: boolean; h2?: boolean };
 
-// Rede de segurança do sinal: pendentes das últimas 6h cujo Pix já foi pago (aviso do Asaas que não chegou) são confirmados.
+// Rede de segurança do sinal: pendentes das últimas 24h cujo Pix já foi pago (aviso do Asaas que não chegou) são confirmados.
 async function reconcileRecent() {
   const admin = getSupabaseAdmin();
-  const since = new Date(Date.now() - 6 * 3600_000).toISOString();
+  const since = new Date(Date.now() - 24 * 3600_000).toISOString();
   const { data } = await admin.from("appointments").select("id,business_id,asaas_payment_id,status").eq("status", "pending").not("asaas_payment_id", "is", null).gte("created_at", since).limit(50);
   let confirmed = 0;
   for (const a of data ?? []) if (await reconcilePending(admin, a as any)) confirmed++;

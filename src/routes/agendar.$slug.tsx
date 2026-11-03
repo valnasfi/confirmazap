@@ -143,7 +143,7 @@ function Booking() {
               {manageToken && <p className="mt-2 text-xs text-muted-foreground">Guarde este link: você também recebe pelo WhatsApp.</p>}
             </>) : expired ? (<>
               <h2 className="text-xl font-bold">Tempo esgotado</h2>
-              <p className="mt-2 text-sm text-muted-foreground">O sinal não foi pago em {HOLD_MINUTES} minutos e o horário foi liberado. Se você já pagou, avise o estabelecimento.</p>
+              <p className="mt-2 text-sm text-muted-foreground">O sinal não foi pago em {HOLD_MINUTES} minutos e o horário foi liberado. Se você já pagou, o horário é confirmado automaticamente em alguns minutos e você recebe um aviso no WhatsApp. Se o horário já tiver sido ocupado, o estabelecimento devolve o sinal.</p>
               <Button className="mt-5" onClick={() => window.location.reload()}>Escolher outro horário</Button>
             </>) : (<>
               <h2 className="text-xl font-bold">Pague o sinal para confirmar</h2>
