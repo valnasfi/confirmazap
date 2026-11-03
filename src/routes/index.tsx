@@ -185,7 +185,9 @@ function Features() {
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {f.map((x) => (
           <div key={x.t} className="rounded-2xl bg-card p-5 shadow-card transition hover:-translate-y-0.5">
-            <x.i className="h-6 w-6 text-primary" />
+            <div className="flex justify-center">
+              <x.i className="h-6 w-6 text-primary" />
+            </div>
             <h3 className="mt-3 font-semibold">{x.t}</h3>
             <p className="mt-1.5 text-sm text-muted-foreground">{x.d}</p>
           </div>
