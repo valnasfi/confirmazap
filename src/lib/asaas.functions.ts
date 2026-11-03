@@ -6,6 +6,7 @@ import { getEntitlements, getUsage } from "./plans.core";
 import { siteUrl, toWaNumber, firstName } from "./manage.core";
 import { uazapi } from "./uazapi";
 import { DEFAULT_NOSHOW_MESSAGE } from "./birthday";
+import { sendBookingConfirmed } from "./booking-notify";
 
 // Profissionais ativos do negócio. Sem a tabela (SQL ainda não rodado) ou sem nenhum, a agenda vale para o negócio todo.
 async function activePros(admin: ReturnType<typeof getSupabaseAdmin>, businessId: string) {
@@ -189,6 +190,7 @@ export const createBooking = createServerFn({ method: "POST" })
     if (value <= 0) {
       const { error } = await admin.from("appointments").update({ status: "confirmed" }).eq("id", appt.id);
       if (error) throw new Error(error.message);
+      await sendBookingConfirmed(admin, appt.id);
       return { appointmentId: appt.id, status: "confirmed", value: 0, qrCode: null, pixCopyAndPaste: null, manageToken: appt.manage_token ?? null };
     }
 

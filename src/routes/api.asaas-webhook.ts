@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { PLANS } from "@/lib/plans";
+import { sendBookingConfirmed } from "@/lib/booking-notify";
 
 // Webhook do Asaas: quando o Pix do sinal é pago, o horário é confirmado.
 // URL a cadastrar no Asaas: https://SEU-SITE/api/asaas-webhook
@@ -60,9 +61,11 @@ async function confirmPayment(paymentId: string) {
     return;
   }
 
-  const { error: uErr } = await admin.from("appointments").update({ status: "confirmed", deposit_paid: true }).eq("id", appt.id).eq("status", "pending");
+  const { data: changed, error: uErr } = await admin.from("appointments").update({ status: "confirmed", deposit_paid: true }).eq("id", appt.id).eq("status", "pending").select("id");
   if (uErr) throw new Error(uErr.message);
   await setPayment("paid");
+  // Só avisa quando esta chamada foi quem confirmou (evento repetido do Asaas não reenvia).
+  if (changed && changed.length > 0) await sendBookingConfirmed(admin, appt.id);
 }
 
 // Mensalidade dos planos (conta Asaas da plataforma): o pagamento ativa o plano e estende o período.
