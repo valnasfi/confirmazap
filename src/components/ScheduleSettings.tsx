@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CalendarOff, Clock, Trash2 } from "lucide-react";
 import { useBiz } from "@/components/AppShell";
@@ -16,7 +16,7 @@ function useScheduleStore() {
   const { business, reload } = useBiz();
   const settings = (business.settings ?? {}) as Record<string, unknown>;
   const sch = readSchedule(settings);
-  const save = async (patch: Partial<{ hours: DayHours[]; blocks: Block[]; paused: boolean }>) => {
+  const save = async (patch: Partial<{ hours: DayHours[]; blocks: Block[]; paused: boolean; pausedPros: string[] }>) => {
     const { error } = await supabase.from("businesses").update({ settings: { ...settings, ...patch } }).eq("id", business.id);
     if (error) { toast.error(error.message); return false; }
     await reload();
@@ -25,12 +25,27 @@ function useScheduleStore() {
   return { business, sch, save };
 }
 
+type Pro = { id: string; name: string };
+
+// Profissionais ativos do negócio (vazio quando a tabela ainda não existe).
+function usePros() {
+  const { business } = useBiz();
+  const [pros, setPros] = useState<Pro[]>([]);
+  useEffect(() => {
+    supabase.from("professionals").select("id,name").eq("business_id", business.id).eq("active", true).order("created_at")
+      .then(({ data, error }) => setPros(error ? [] : ((data ?? []) as Pro[])));
+  }, [business.id]);
+  return pros;
+}
+
 // Quantos agendamentos já existem no período que será fechado (eles não são cancelados sozinhos).
-async function countExisting(businessId: string, start: string, end: string) {
+async function countExisting(businessId: string, start: string, end: string, proIds: string[]) {
   const next = new Date(`${end}T00:00:00Z`); next.setUTCDate(next.getUTCDate() + 1);
-  const { count } = await supabase.from("appointments").select("id", { count: "exact", head: true })
+  let q = supabase.from("appointments").select("id", { count: "exact", head: true })
     .eq("business_id", businessId).neq("status", "canceled")
     .gte("start_at", `${start}T03:00:00`).lt("start_at", `${next.toISOString().slice(0, 10)}T03:00:00`);
+  if (proIds.length) q = q.in("professional_id", proIds);
+  const { count } = await q;
   return count ?? 0;
 }
 
@@ -44,13 +59,18 @@ function BlockForm({ onDone }: { onDone: () => void }) {
   const [to, setTo] = useState("14:00");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const pros = usePros();
+  const [who, setWho] = useState<"all" | "some">("all");
+  const [picked, setPicked] = useState<string[]>([]);
 
   const add = async () => {
     if (!start || !end || end < start) { toast.error("Confira as datas: o fim não pode ser antes do início."); return; }
     if (!allDay && !(toMin(from) < toMin(to))) { toast.error("O horário final precisa ser depois do inicial."); return; }
+    if (who === "some" && picked.length === 0) { toast.error("Marque pelo menos um profissional."); return; }
     setBusy(true);
-    const b: Block = { id: Date.now().toString(36), start, end, ...(allDay ? {} : { from, to }), ...(reason.trim() ? { reason: reason.trim() } : {}) };
-    const n = await countExisting(business.id, start, end);
+    const ids = who === "some" ? picked : [];
+    const b: Block = { id: Date.now().toString(36), start, end, ...(allDay ? {} : { from, to }), ...(reason.trim() ? { reason: reason.trim() } : {}), ...(ids.length ? { professionalIds: ids } : {}) };
+    const n = await countExisting(business.id, start, end, ids);
     const ok = await save({ blocks: [...sch.blocks, b] });
     setBusy(false);
     if (!ok) return;
@@ -60,6 +80,24 @@ function BlockForm({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="space-y-3">
+      {pros.length > 1 && (
+        <div className="text-sm">
+          <p className="mb-1">Quem fecha</p>
+          <div className="flex flex-wrap gap-4">
+            <label className="flex items-center gap-2"><input type="radio" checked={who === "all"} onChange={() => setWho("all")} />Agenda toda (todos)</label>
+            <label className="flex items-center gap-2"><input type="radio" checked={who === "some"} onChange={() => setWho("some")} />Só alguns profissionais</label>
+          </div>
+          {who === "some" && (
+            <div className="mt-2 flex flex-wrap gap-3">
+              {pros.map((p) => (
+                <label key={p.id} className="flex items-center gap-2">
+                  <input type="checkbox" checked={picked.includes(p.id)} onChange={(e) => setPicked(e.target.checked ? [...picked, p.id] : picked.filter((x) => x !== p.id))} />{p.name}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="text-sm">De<Input type="date" min={today} value={start} onChange={(e) => { setStart(e.target.value); if (end < e.target.value) setEnd(e.target.value); }} /></label>
         <label className="text-sm">Até<Input type="date" min={start} value={end} onChange={(e) => setEnd(e.target.value)} /></label>
@@ -96,6 +134,8 @@ export function CloseAgendaDialog() {
 
 export function ScheduleSettings() {
   const { sch, save } = useScheduleStore();
+  const pros = usePros();
+  const nameOf = (id: string) => pros.find((p) => p.id === id)?.name ?? "profissional";
   const [hours, setHours] = useState<DayHours[]>(sch.hours);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -125,6 +165,25 @@ export function ScheduleSettings() {
           <Switch checked={sch.paused} onCheckedChange={(v) => save({ paused: v }).then((ok) => ok && toast.success(v ? "Agenda fechada para novos agendamentos" : "Agenda aberta"))} aria-label="Fechar agenda" />
         </div>
       </section>
+
+      {pros.length > 1 && (
+        <section className="rounded-2xl bg-card p-6 shadow-card">
+          <h2 className="text-lg font-semibold">Agenda por profissional</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Feche a agenda de um profissional (férias, atestado, saída) sem mexer na dos outros. Os horários já marcados continuam.</p>
+          <div className="mt-4 divide-y">
+            {pros.map((p) => {
+              const closed = sch.pausedPros.includes(p.id);
+              return (
+                <div key={p.id} className="flex items-center gap-3 py-3">
+                  <span className="flex-1 font-medium">{p.name}</span>
+                  <span className="text-xs text-muted-foreground">{closed ? "Agenda fechada" : "Agenda aberta"}</span>
+                  <Switch checked={closed} onCheckedChange={(v) => save({ pausedPros: v ? [...sch.pausedPros, p.id] : sch.pausedPros.filter((x) => x !== p.id) }).then((ok) => ok && toast.success(v ? `Agenda de ${p.name} fechada` : `Agenda de ${p.name} aberta`))} aria-label={`Fechar agenda de ${p.name}`} />
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <section className="rounded-2xl bg-card p-6 shadow-card">
         <h2 className="flex items-center gap-2 text-lg font-semibold"><Clock className="h-5 w-5" />Horário de funcionamento</h2>
@@ -157,6 +216,7 @@ export function ScheduleSettings() {
               <span className="flex-1">
                 <b>{b.start === b.end ? fmtDate(b.start) : `${fmtDate(b.start)} a ${fmtDate(b.end)}`}</b>
                 {b.from && b.to ? `, das ${b.from} às ${b.to}` : ", dia inteiro"}
+                <span className="text-muted-foreground"> · {b.professionalIds?.length ? b.professionalIds.map(nameOf).join(", ") : "agenda toda"}</span>
                 {b.reason ? <span className="text-muted-foreground"> · {b.reason}</span> : null}
               </span>
               <Button size="icon" variant="ghost" aria-label="Remover fechamento" onClick={() => save({ blocks: sch.blocks.filter((x) => x.id !== b.id) })}><Trash2 className="h-4 w-4" /></Button>

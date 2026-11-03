@@ -73,11 +73,13 @@ function Booking() {
     })();
   }, [slug]);
 
+  // Quem poderia atender: o profissional escolhido ou, sem preferência, todos que fazem o serviço.
+  const cands: string[] = pros.length === 0 ? [] : pro && pro !== "any" ? [pro.id] : elig.map((p) => p.id);
   const days = useMemo(() => {
     const out: Date[] = []; const d = new Date(); d.setHours(0, 0, 0, 0);
-    for (let i = 0; out.length < 12 && i < 120; i++) { if (isDayOpen(d, sch)) out.push(new Date(d)); d.setDate(d.getDate() + 1); }
+    for (let i = 0; out.length < 12 && i < 120; i++) { if (isDayOpen(d, sch, cands)) out.push(new Date(d)); d.setDate(d.getDate() + 1); }
     return out;
-  }, [sch]);
+  }, [sch, cands.join(",")]);
 
   useEffect(() => {
     if (!biz || !day) return;
@@ -103,7 +105,7 @@ function Booking() {
     return () => { stop = true; clearInterval(id); };
   }, [result, paid, expired]);
 
-  const slots = useMemo(() => (day && svc ? generateSlotsFor(day, svc.duration_minutes, busy, sch).filter((s) => s.getTime() > Date.now() + minAdvanceMs()) : []), [day, svc, busy]);
+  const slots = useMemo(() => (day && svc ? generateSlotsFor(day, svc.duration_minutes, busy, sch, cands).filter((s) => s.getTime() > Date.now() + minAdvanceMs()) : []), [day, svc, busy]);
 
   const confirm = async () => {
     if (!biz || !svc || !slot) return;

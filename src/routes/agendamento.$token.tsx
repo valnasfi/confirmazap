@@ -35,11 +35,12 @@ function Manage() {
   useEffect(() => { load(); }, [token]);
   useEffect(() => { if (info?.businessId) getSchedule({ data: { businessId: info.businessId } }).then((x) => setSch(x as Schedule)).catch(() => {}); }, [info?.businessId]);
 
+  const cands: string[] = info?.professionalId ? [info.professionalId] : [];
   const days = useMemo(() => {
     const out: Date[] = []; const d = new Date(); d.setHours(0, 0, 0, 0);
-    for (let i = 0; out.length < 12 && i < 120; i++) { if (isDayOpen(d, sch)) out.push(new Date(d)); d.setDate(d.getDate() + 1); }
+    for (let i = 0; out.length < 12 && i < 120; i++) { if (isDayOpen(d, sch, cands)) out.push(new Date(d)); d.setDate(d.getDate() + 1); }
     return out;
-  }, [sch]);
+  }, [sch, cands.join(",")]);
 
   useEffect(() => {
     if (!info || !day) return;
@@ -47,7 +48,7 @@ function Manage() {
     getBusySlots({ data: { businessId: info.businessId, from: day.toISOString(), to: to.toISOString(), professionalId: info.professionalId } }).then(setBusySlots).catch(() => setBusySlots([]));
   }, [info, day]);
 
-  const slots = useMemo(() => (day && info ? generateSlotsFor(day, info.durationMinutes, busySlots, sch).filter((s) => s.getTime() > Date.now() + minAdvanceMs()) : []), [day, info, busySlots]);
+  const slots = useMemo(() => (day && info ? generateSlotsFor(day, info.durationMinutes, busySlots, sch, cands).filter((s) => s.getTime() > Date.now() + minAdvanceMs()) : []), [day, info, busySlots]);
 
   const doConfirm = async () => {
     setBusy(true);

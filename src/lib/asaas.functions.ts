@@ -129,7 +129,6 @@ export const createBooking = createServerFn({ method: "POST" })
     if (Number.isNaN(start.getTime()) || start.getTime() < Date.now()) throw new Error("Horário inválido. Escolha outro.");
     if (start.getTime() < Date.now() + minAdvanceMs()) throw new Error(`Só é possível agendar com pelo menos ${MIN_ADVANCE_HOURS} horas de antecedência. Escolha outro horário.`);
     const sch = readSchedule(biz.settings);
-    if (!slotAllowed(start.getTime(), svc.duration_minutes, sch)) throw new Error(sch.paused ? "A agenda deste negócio está fechada no momento." : "O estabelecimento não atende nesse horário. Escolha outro.");
     const end = new Date(start.getTime() + svc.duration_minutes * 60000);
     // Quem atende: o profissional escolhido ou, sem preferência, o primeiro livre naquele horário.
     const allPros = await activePros(admin, biz.id);
@@ -137,9 +136,12 @@ export const createBooking = createServerFn({ method: "POST" })
     if (allPros.length > 0 && pros.length === 0) throw new Error("Nenhum profissional disponível para este serviço no momento.");
     if (data.professionalId && !pros.some((p) => p.id === data.professionalId)) throw new Error("Este profissional não faz este serviço. Escolha outro.");
     const candidates = allPros.length === 0 ? [null] : data.professionalId ? [data.professionalId] : pros.map((p) => p.id);
+    // Só entram profissionais cuja agenda está aberta nesse dia e horário (funcionamento, fechamentos e agenda fechada).
+    const open = candidates.filter((c) => slotAllowed(start.getTime(), svc.duration_minutes, sch, c ? [c] : null));
+    if (open.length === 0) throw new Error(sch.paused ? "A agenda deste negócio está fechada no momento." : "Não há atendimento nesse horário. Escolha outro.");
     let professionalId: string | null = null;
     let free = false;
-    for (const cand of candidates) {
+    for (const cand of open) {
       let q = admin.from("appointments").select("id").eq("business_id", biz.id).eq("start_at", start.toISOString()).neq("status", "canceled").or(activeHoldFilter());
       if (cand) q = q.eq("professional_id", cand);
       const { data: clash } = await q.limit(1);

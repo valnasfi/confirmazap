@@ -72,7 +72,7 @@ export const rescheduleByToken = createServerFn({ method: "POST" })
     if (start.getTime() < Date.now() + minAdvanceMs()) throw new Error(`Só é possível remarcar com pelo menos ${MIN_ADVANCE_HOURS} horas de antecedência. Escolha outro horário.`);
     const dur = Number(a.services?.duration_minutes ?? 60);
     const sch = readSchedule(a.businesses?.settings);
-    if (!slotAllowed(start.getTime(), dur, sch)) throw new Error(sch.paused ? "A agenda deste negócio está fechada no momento." : "O estabelecimento não atende nesse horário. Escolha outro.");
+    if (!slotAllowed(start.getTime(), dur, sch, a.professional_id ? [a.professional_id] : null)) throw new Error(sch.paused ? "A agenda deste negócio está fechada no momento." : "Não há atendimento nesse horário. Escolha outro.");
     const end = new Date(start.getTime() + dur * 60000);
 
     let clashQuery = admin

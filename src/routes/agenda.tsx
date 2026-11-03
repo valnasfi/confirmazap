@@ -26,6 +26,7 @@ function Agenda() {
   const [sel, setSel] = useState<Appt | null>(null);
   const [busy, setBusy] = useState(false);
   const [activePros, setActivePros] = useState<string[]>([]);
+  const [proIds, setProIds] = useState<Record<string, string>>({}); // nome -> id
 
   const load = async () => {
     // customer_confirmed_at só existe depois do SQL dos lembretes: sem ele, a agenda continua funcionando.
@@ -38,8 +39,12 @@ function Agenda() {
   useEffect(() => { load(); }, [business.id]);
   // Profissionais ativos: com mais de um, a agenda mostra de quem é cada horário e libera o filtro.
   useEffect(() => {
-    supabase.from("professionals").select("name").eq("business_id", business.id).eq("active", true).order("created_at")
-      .then(({ data, error }) => setActivePros(error ? [] : ((data ?? []) as Array<{ name: string }>).map((p) => p.name)));
+    supabase.from("professionals").select("id,name").eq("business_id", business.id).eq("active", true).order("created_at")
+      .then(({ data, error }) => {
+        const list = error ? [] : ((data ?? []) as Array<{ id: string; name: string }>);
+        setActivePros(list.map((p) => p.name));
+        setProIds(Object.fromEntries(list.map((p) => [p.name, p.id])));
+      });
   }, [business.id]);
 
   const setStatus = async (status: string) => {
@@ -89,7 +94,9 @@ function Agenda() {
   const slotMax = `${toHHMM(Math.min(24 * 60, Math.ceil((maxM || 19 * 60) / 60) * 60))}:00`;
   const apptDays = new Set(items.map((a) => new Date(asUtc(a.start_at)).getDay()));
   const hiddenDays = sched.hours.map((h, d) => (!h.open && !apptDays.has(d) ? d : -1)).filter((d) => d >= 0);
-  const closedEvents = readSchedule(business.settings).blocks.map((b) => {
+  // Fechamento da agenda toda aparece sempre; o de profissionais só quando o filtro está nesse profissional.
+  const filterId = proFilter ? proIds[proFilter] : undefined;
+  const closedEvents = readSchedule(business.settings).blocks.filter((b) => !b.professionalIds?.length || (filterId && b.professionalIds.includes(filterId))).map((b) => {
     const nextDay = new Date(`${b.end}T00:00:00Z`); nextDay.setUTCDate(nextDay.getUTCDate() + 1);
     const whole = !b.from || !b.to;
     return whole
