@@ -24,10 +24,22 @@ async function reconcileRecent() {
   return confirmed;
 }
 
+// Limpeza: cobranças de sinal que ficaram "Aguardando" por mais de 1 dia somem da lista. Taxas de falta (agendamento marcado como falta) ficam, pois ainda podem ser pagas.
+async function cleanupStalePayments() {
+  const admin = getSupabaseAdmin();
+  const before = new Date(Date.now() - 24 * 3600_000).toISOString();
+  const { data } = await admin.from("payments").select("id,appointments(status)").eq("status", "pending").lt("created_at", before).limit(500);
+  const ids = (data ?? []).filter((r: any) => r.appointments?.status !== "no_show").map((r: any) => r.id as string);
+  if (ids.length === 0) return 0;
+  await admin.from("payments").delete().in("id", ids);
+  return ids.length;
+}
+
 async function run() {
   const reconciled = await reconcileRecent().catch(() => 0);
+  const cleaned = await cleanupStalePayments().catch(() => 0);
   const hourBr = new Date(Date.now() - 3 * 3600_000).getUTCHours();
-  if (hourBr < FROM_HOUR || hourBr >= TO_HOUR) return { sent: 0, reconciled, skipped: "fora do horário de envio" };
+  if (hourBr < FROM_HOUR || hourBr >= TO_HOUR) return { sent: 0, reconciled, cleaned, skipped: "fora do horário de envio" };
 
   const admin = getSupabaseAdmin();
   const now = Date.now();
@@ -86,7 +98,7 @@ async function run() {
       }
     }
   }
-  return { sent, failed, reconciled, diag };
+  return { sent, failed, reconciled, cleaned, diag };
 }
 
 export const Route = createFileRoute("/api/cron/reminders")({

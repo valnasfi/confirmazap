@@ -12,14 +12,16 @@ export const Route = createFileRoute("/cobrancas")({
   component: () => <AppShell><Cobrancas /></AppShell>,
 });
 
-type P = { id: string; created_at: string; value: number; status: string; asaas_payment_id: string | null; customers: { name: string } | null };
+type P = { id: string; created_at: string; value: number; status: string; asaas_payment_id: string | null; customers: { name: string } | null; appointments?: { status: string } | null };
+// "Aguardando" há mais de 1 dia some da lista (exceto taxa de falta, que ainda pode ser paga).
+const stale = (r: P) => r.status === "pending" && r.appointments?.status !== "no_show" && Date.now() - new Date(r.created_at.replace(" ", "T") + (/(Z|[+-]\d{2}:?\d{2})$/.test(r.created_at) ? "" : "Z")).getTime() > 24 * 3600_000;
 const label: Record<string, string> = { pending: "Aguardando", paid: "Pago", failed: "Falhou", canceled: "Cancelado", refund_needed: "Devolver sinal", refunded: "Devolvido" };
 
 function Cobrancas() {
   const { business } = useBiz();
   const [rows, setRows] = useState<P[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const load = useCallback(() => supabase.from("payments").select("id,created_at,value,status,asaas_payment_id,customers(name)").eq("business_id", business.id).order("created_at", { ascending: false }).then(({ data }) => setRows((data as unknown as P[]) ?? [])), [business.id]);
+  const load = useCallback(() => supabase.from("payments").select("id,created_at,value,status,asaas_payment_id,customers(name),appointments(status)").eq("business_id", business.id).order("created_at", { ascending: false }).then(({ data }) => setRows(((data as unknown as P[]) ?? []).filter((r) => !stale(r)))), [business.id]);
   useEffect(() => { load(); }, [load]);
 
   const refund = async (r: P) => {
