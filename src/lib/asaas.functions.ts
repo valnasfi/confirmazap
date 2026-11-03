@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSupabaseAdmin } from "./supabaseAdmin";
-import { HOLD_MINUTES, activeHoldFilter } from "./booking";
+import { HOLD_MINUTES, MIN_ADVANCE_HOURS, activeHoldFilter, minAdvanceMs } from "./booking";
 import { getEntitlements, getUsage } from "./plans.core";
 import { siteUrl, toWaNumber, firstName } from "./manage.core";
 import { uazapi } from "./uazapi";
@@ -126,6 +126,7 @@ export const createBooking = createServerFn({ method: "POST" })
 
     const start = new Date(data.startAt);
     if (Number.isNaN(start.getTime()) || start.getTime() < Date.now()) throw new Error("Horário inválido. Escolha outro.");
+    if (start.getTime() < Date.now() + minAdvanceMs()) throw new Error(`Só é possível agendar com pelo menos ${MIN_ADVANCE_HOURS} horas de antecedência. Escolha outro horário.`);
     const end = new Date(start.getTime() + svc.duration_minutes * 60000);
     // Quem atende: o profissional escolhido ou, sem preferência, o primeiro livre naquele horário.
     const allPros = await activePros(admin, biz.id);

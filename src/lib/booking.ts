@@ -2,6 +2,10 @@
 export const OPEN_HOUR = 8;
 export const CLOSE_HOUR = 19;
 
+// Antecedência mínima para agendar ou remarcar: horários com menos que isso não aparecem e o servidor recusa.
+export const MIN_ADVANCE_HOURS = 4;
+export const minAdvanceMs = () => MIN_ADVANCE_HOURS * 3_600_000;
+
 // Tempo que o horário fica guardado esperando o pagamento do sinal.
 export const HOLD_MINUTES = 30;
 export const holdCutoff = () => new Date(Date.now() - HOLD_MINUTES * 60_000).toISOString();

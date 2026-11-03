@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Copy } from "lucide-react";
 import { supabase, type Business, type Service } from "@/lib/supabaseClient";
-import { generateSlots, isOpenDay, maskWhatsapp, brl, HOLD_MINUTES } from "@/lib/booking";
+import { generateSlots, isOpenDay, maskWhatsapp, brl, HOLD_MINUTES, minAdvanceMs } from "@/lib/booking";
 
 type Pro = { id: string; name: string };
 import { getBusySlots, createBooking, getBookingStatus } from "@/lib/asaas.functions";
@@ -99,7 +99,7 @@ function Booking() {
     return () => { stop = true; clearInterval(id); };
   }, [result, paid, expired]);
 
-  const slots = useMemo(() => (day && svc ? generateSlots(day, svc.duration_minutes, busy).filter((s) => s > new Date()) : []), [day, svc, busy]);
+  const slots = useMemo(() => (day && svc ? generateSlots(day, svc.duration_minutes, busy).filter((s) => s.getTime() > Date.now() + minAdvanceMs()) : []), [day, svc, busy]);
 
   const confirm = async () => {
     if (!biz || !svc || !slot) return;

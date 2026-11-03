@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { generateSlots, isOpenDay } from "@/lib/booking";
+import { generateSlots, isOpenDay, minAdvanceMs } from "@/lib/booking";
 import { getBusySlots } from "@/lib/asaas.functions";
 import { cancelByToken, confirmByToken, getManage, rescheduleByToken } from "@/lib/manage.functions";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,7 @@ function Manage() {
     getBusySlots({ data: { businessId: info.businessId, from: day.toISOString(), to: to.toISOString(), professionalId: info.professionalId } }).then(setBusySlots).catch(() => setBusySlots([]));
   }, [info, day]);
 
-  const slots = useMemo(() => (day && info ? generateSlots(day, info.durationMinutes, busySlots).filter((s) => s > new Date()) : []), [day, info, busySlots]);
+  const slots = useMemo(() => (day && info ? generateSlots(day, info.durationMinutes, busySlots).filter((s) => s.getTime() > Date.now() + minAdvanceMs()) : []), [day, info, busySlots]);
 
   const doConfirm = async () => {
     setBusy(true);
