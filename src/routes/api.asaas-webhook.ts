@@ -66,7 +66,7 @@ async function confirmPayment(paymentId: string) {
 }
 
 // Mensalidade dos planos (conta Asaas da plataforma): o pagamento ativa o plano e estende o período.
-async function handleSubscriptionPayment(event: string, pay: { subscription: string; dueDate?: string }) {
+async function handleSubscriptionPayment(event: string, pay: { subscription: string; dueDate?: string | undefined }) {
   const admin = getSupabaseAdmin();
   const { data: s } = await admin.from("subscriptions").select("*").eq("asaas_subscription_id", pay.subscription).maybeSingle();
   if (!s) return;

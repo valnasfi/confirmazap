@@ -58,7 +58,7 @@ async function removeByUrl(url: string) {
   const marker = `/${BUCKET}/`;
   const i = url.indexOf(marker);
   if (i < 0) return;
-  const path = decodeURIComponent(url.slice(i + marker.length).split("?")[0]);
+  const path = decodeURIComponent(url.slice(i + marker.length).split("?")[0] ?? "");
   await supabase.storage.from(BUCKET).remove([path]);
 }
 
