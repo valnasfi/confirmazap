@@ -26,7 +26,7 @@ select cron.schedule(
   'confirmazap-reativacao',
   '30 * * * *',
   $$ select net.http_post(
-       url := 'https://confirmazap.lovable.app/api/cron/reactivation',
+       url := 'https://reservapix.vip/api/cron/reactivation',
        headers := '{"Content-Type": "application/json"}'::jsonb,
        body := '{}'::jsonb
      ) $$

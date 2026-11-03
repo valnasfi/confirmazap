@@ -22,7 +22,7 @@ select cron.schedule(
   'confirmazap-aniversarios',
   '0 * * * *',
   $$ select net.http_post(
-       url := 'https://confirmazap.lovable.app/api/cron/birthdays',
+       url := 'https://reservapix.vip/api/cron/birthdays',
        headers := '{"Content-Type": "application/json"}'::jsonb,
        body := '{}'::jsonb
      ) $$
