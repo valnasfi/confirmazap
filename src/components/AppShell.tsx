@@ -27,7 +27,7 @@ const nav = [
 export function Logo({ light }: { light?: boolean }) {
   return (
     <span className={`flex items-center gap-2 font-display text-lg font-bold ${light ? "text-ink-foreground" : "text-foreground"}`}>
-      <img src="/logo.png" alt="" width={32} height={32} className="h-8 w-8 rounded-full" />
+      <img src="/logo.png" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
       ReservaPix
     </span>
   );
