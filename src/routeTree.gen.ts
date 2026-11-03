@@ -12,18 +12,18 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AgendaRouteImport } from './routes/agenda'
-import { Route as ApiAsaasWebhookRouteImport } from './routes/api.asaas-webhook'
-import { Route as ApiCronBirthdaysRouteImport } from './routes/api.cron.birthdays'
-import { Route as ApiCronRemindersRouteImport } from './routes/api.cron.reminders'
-import { Route as ApiUazapiWebhookRouteImport } from './routes/api.uazapi-webhook'
-import { Route as AgendamentoTokenRouteImport } from './routes/agendamento.$token'
-import { Route as ApiCronReactivationRouteImport } from './routes/api.cron.reactivation'
 import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as CobrancasRouteImport } from './routes/cobrancas'
 import { Route as ConfigRouteImport } from './routes/config'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AgendamentoTokenRouteImport } from './routes/agendamento.$token'
 import { Route as AgendarSlugRouteImport } from './routes/agendar.$slug'
+import { Route as ApiAsaasWebhookRouteImport } from './routes/api.asaas-webhook'
+import { Route as ApiUazapiWebhookRouteImport } from './routes/api.uazapi-webhook'
+import { Route as ApiCronBirthdaysRouteImport } from './routes/api.cron.birthdays'
+import { Route as ApiCronReactivationRouteImport } from './routes/api.cron.reactivation'
+import { Route as ApiCronRemindersRouteImport } from './routes/api.cron.reminders'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -38,36 +38,6 @@ const AdminRoute = AdminRouteImport.update({
 const AgendaRoute = AgendaRouteImport.update({
   id: '/agenda',
   path: '/agenda',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAsaasWebhookRoute = ApiAsaasWebhookRouteImport.update({
-  id: '/api/asaas-webhook',
-  path: '/api/asaas-webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiCronBirthdaysRoute = ApiCronBirthdaysRouteImport.update({
-  id: '/api/cron/birthdays',
-  path: '/api/cron/birthdays',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiCronRemindersRoute = ApiCronRemindersRouteImport.update({
-  id: '/api/cron/reminders',
-  path: '/api/cron/reminders',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiUazapiWebhookRoute = ApiUazapiWebhookRouteImport.update({
-  id: '/api/uazapi-webhook',
-  path: '/api/uazapi-webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AgendamentoTokenRoute = AgendamentoTokenRouteImport.update({
-  id: '/agendamento/$token',
-  path: '/agendamento/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiCronReactivationRoute = ApiCronReactivationRouteImport.update({
-  id: '/api/cron/reactivation',
-  path: '/api/cron/reactivation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientesRoute = ClientesRouteImport.update({
@@ -95,9 +65,39 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgendamentoTokenRoute = AgendamentoTokenRouteImport.update({
+  id: '/agendamento/$token',
+  path: '/agendamento/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AgendarSlugRoute = AgendarSlugRouteImport.update({
   id: '/agendar/$slug',
   path: '/agendar/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAsaasWebhookRoute = ApiAsaasWebhookRouteImport.update({
+  id: '/api/asaas-webhook',
+  path: '/api/asaas-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiUazapiWebhookRoute = ApiUazapiWebhookRouteImport.update({
+  id: '/api/uazapi-webhook',
+  path: '/api/uazapi-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCronBirthdaysRoute = ApiCronBirthdaysRouteImport.update({
+  id: '/api/cron/birthdays',
+  path: '/api/cron/birthdays',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCronReactivationRoute = ApiCronReactivationRouteImport.update({
+  id: '/api/cron/reactivation',
+  path: '/api/cron/reactivation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCronRemindersRoute = ApiCronRemindersRouteImport.update({
+  id: '/api/cron/reminders',
+  path: '/api/cron/reminders',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -105,53 +105,53 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/agenda': typeof AgendaRoute
-  '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
-  '/api/cron/birthdays': typeof ApiCronBirthdaysRoute
-  '/api/cron/reactivation': typeof ApiCronReactivationRoute
-  '/agendamento/$token': typeof AgendamentoTokenRoute
-  '/api/uazapi-webhook': typeof ApiUazapiWebhookRoute
-  '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/clientes': typeof ClientesRoute
   '/cobrancas': typeof CobrancasRoute
   '/config': typeof ConfigRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/agendamento/$token': typeof AgendamentoTokenRoute
   '/agendar/$slug': typeof AgendarSlugRoute
+  '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
+  '/api/uazapi-webhook': typeof ApiUazapiWebhookRoute
+  '/api/cron/birthdays': typeof ApiCronBirthdaysRoute
+  '/api/cron/reactivation': typeof ApiCronReactivationRoute
+  '/api/cron/reminders': typeof ApiCronRemindersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/agenda': typeof AgendaRoute
-  '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
-  '/api/cron/birthdays': typeof ApiCronBirthdaysRoute
-  '/api/cron/reactivation': typeof ApiCronReactivationRoute
-  '/agendamento/$token': typeof AgendamentoTokenRoute
-  '/api/uazapi-webhook': typeof ApiUazapiWebhookRoute
-  '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/clientes': typeof ClientesRoute
   '/cobrancas': typeof CobrancasRoute
   '/config': typeof ConfigRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/agendamento/$token': typeof AgendamentoTokenRoute
   '/agendar/$slug': typeof AgendarSlugRoute
+  '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
+  '/api/uazapi-webhook': typeof ApiUazapiWebhookRoute
+  '/api/cron/birthdays': typeof ApiCronBirthdaysRoute
+  '/api/cron/reactivation': typeof ApiCronReactivationRoute
+  '/api/cron/reminders': typeof ApiCronRemindersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/agenda': typeof AgendaRoute
-  '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
-  '/api/cron/birthdays': typeof ApiCronBirthdaysRoute
-  '/api/cron/reactivation': typeof ApiCronReactivationRoute
-  '/agendamento/$token': typeof AgendamentoTokenRoute
-  '/api/uazapi-webhook': typeof ApiUazapiWebhookRoute
-  '/api/cron/reminders': typeof ApiCronRemindersRoute
   '/clientes': typeof ClientesRoute
   '/cobrancas': typeof CobrancasRoute
   '/config': typeof ConfigRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/agendamento/$token': typeof AgendamentoTokenRoute
   '/agendar/$slug': typeof AgendarSlugRoute
+  '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
+  '/api/uazapi-webhook': typeof ApiUazapiWebhookRoute
+  '/api/cron/birthdays': typeof ApiCronBirthdaysRoute
+  '/api/cron/reactivation': typeof ApiCronReactivationRoute
+  '/api/cron/reminders': typeof ApiCronRemindersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -159,70 +159,70 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/agenda'
-    | '/api/asaas-webhook'
-    | '/api/cron/birthdays'
-    | '/api/cron/reactivation'
-    | '/agendamento/$token'
-    | '/api/uazapi-webhook'
-    | '/api/cron/reminders'
     | '/clientes'
     | '/cobrancas'
     | '/config'
     | '/dashboard'
     | '/login'
+    | '/agendamento/$token'
     | '/agendar/$slug'
+    | '/api/asaas-webhook'
+    | '/api/uazapi-webhook'
+    | '/api/cron/birthdays'
+    | '/api/cron/reactivation'
+    | '/api/cron/reminders'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
     | '/agenda'
-    | '/api/asaas-webhook'
-    | '/api/cron/birthdays'
-    | '/api/cron/reactivation'
-    | '/agendamento/$token'
-    | '/api/uazapi-webhook'
-    | '/api/cron/reminders'
     | '/clientes'
     | '/cobrancas'
     | '/config'
     | '/dashboard'
     | '/login'
+    | '/agendamento/$token'
     | '/agendar/$slug'
+    | '/api/asaas-webhook'
+    | '/api/uazapi-webhook'
+    | '/api/cron/birthdays'
+    | '/api/cron/reactivation'
+    | '/api/cron/reminders'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/agenda'
-    | '/api/asaas-webhook'
-    | '/api/cron/birthdays'
-    | '/api/cron/reactivation'
-    | '/agendamento/$token'
-    | '/api/uazapi-webhook'
-    | '/api/cron/reminders'
     | '/clientes'
     | '/cobrancas'
     | '/config'
     | '/dashboard'
     | '/login'
+    | '/agendamento/$token'
     | '/agendar/$slug'
+    | '/api/asaas-webhook'
+    | '/api/uazapi-webhook'
+    | '/api/cron/birthdays'
+    | '/api/cron/reactivation'
+    | '/api/cron/reminders'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AgendaRoute: typeof AgendaRoute
-  ApiAsaasWebhookRoute: typeof ApiAsaasWebhookRoute
-  ApiCronBirthdaysRoute: typeof ApiCronBirthdaysRoute
-  ApiCronReactivationRoute: typeof ApiCronReactivationRoute
-  AgendamentoTokenRoute: typeof AgendamentoTokenRoute
-  ApiUazapiWebhookRoute: typeof ApiUazapiWebhookRoute
-  ApiCronRemindersRoute: typeof ApiCronRemindersRoute
   ClientesRoute: typeof ClientesRoute
   CobrancasRoute: typeof CobrancasRoute
   ConfigRoute: typeof ConfigRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  AgendamentoTokenRoute: typeof AgendamentoTokenRoute
   AgendarSlugRoute: typeof AgendarSlugRoute
+  ApiAsaasWebhookRoute: typeof ApiAsaasWebhookRoute
+  ApiUazapiWebhookRoute: typeof ApiUazapiWebhookRoute
+  ApiCronBirthdaysRoute: typeof ApiCronBirthdaysRoute
+  ApiCronReactivationRoute: typeof ApiCronReactivationRoute
+  ApiCronRemindersRoute: typeof ApiCronRemindersRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -246,48 +246,6 @@ declare module '@tanstack/react-router' {
       path: '/agenda'
       fullPath: '/agenda'
       preLoaderRoute: typeof AgendaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/asaas-webhook': {
-      id: '/api/asaas-webhook'
-      path: '/api/asaas-webhook'
-      fullPath: '/api/asaas-webhook'
-      preLoaderRoute: typeof ApiAsaasWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/cron/birthdays': {
-      id: '/api/cron/birthdays'
-      path: '/api/cron/birthdays'
-      fullPath: '/api/cron/birthdays'
-      preLoaderRoute: typeof ApiCronBirthdaysRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/cron/reminders': {
-      id: '/api/cron/reminders'
-      path: '/api/cron/reminders'
-      fullPath: '/api/cron/reminders'
-      preLoaderRoute: typeof ApiCronRemindersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/uazapi-webhook': {
-      id: '/api/uazapi-webhook'
-      path: '/api/uazapi-webhook'
-      fullPath: '/api/uazapi-webhook'
-      preLoaderRoute: typeof ApiUazapiWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/agendamento/$token': {
-      id: '/agendamento/$token'
-      path: '/agendamento/$token'
-      fullPath: '/agendamento/$token'
-      preLoaderRoute: typeof AgendamentoTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/cron/reactivation': {
-      id: '/api/cron/reactivation'
-      path: '/api/cron/reactivation'
-      fullPath: '/api/cron/reactivation'
-      preLoaderRoute: typeof ApiCronReactivationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clientes': {
@@ -325,11 +283,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/agendamento/$token': {
+      id: '/agendamento/$token'
+      path: '/agendamento/$token'
+      fullPath: '/agendamento/$token'
+      preLoaderRoute: typeof AgendamentoTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/agendar/$slug': {
       id: '/agendar/$slug'
       path: '/agendar/$slug'
       fullPath: '/agendar/$slug'
       preLoaderRoute: typeof AgendarSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/asaas-webhook': {
+      id: '/api/asaas-webhook'
+      path: '/api/asaas-webhook'
+      fullPath: '/api/asaas-webhook'
+      preLoaderRoute: typeof ApiAsaasWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/uazapi-webhook': {
+      id: '/api/uazapi-webhook'
+      path: '/api/uazapi-webhook'
+      fullPath: '/api/uazapi-webhook'
+      preLoaderRoute: typeof ApiUazapiWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/birthdays': {
+      id: '/api/cron/birthdays'
+      path: '/api/cron/birthdays'
+      fullPath: '/api/cron/birthdays'
+      preLoaderRoute: typeof ApiCronBirthdaysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/reactivation': {
+      id: '/api/cron/reactivation'
+      path: '/api/cron/reactivation'
+      fullPath: '/api/cron/reactivation'
+      preLoaderRoute: typeof ApiCronReactivationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/reminders': {
+      id: '/api/cron/reminders'
+      path: '/api/cron/reminders'
+      fullPath: '/api/cron/reminders'
+      preLoaderRoute: typeof ApiCronRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -339,18 +339,18 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AgendaRoute: AgendaRoute,
-  ApiAsaasWebhookRoute: ApiAsaasWebhookRoute,
-  ApiCronBirthdaysRoute: ApiCronBirthdaysRoute,
-  ApiCronReactivationRoute: ApiCronReactivationRoute,
-  AgendamentoTokenRoute: AgendamentoTokenRoute,
-  ApiUazapiWebhookRoute: ApiUazapiWebhookRoute,
-  ApiCronRemindersRoute: ApiCronRemindersRoute,
   ClientesRoute: ClientesRoute,
   CobrancasRoute: CobrancasRoute,
   ConfigRoute: ConfigRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  AgendamentoTokenRoute: AgendamentoTokenRoute,
   AgendarSlugRoute: AgendarSlugRoute,
+  ApiAsaasWebhookRoute: ApiAsaasWebhookRoute,
+  ApiUazapiWebhookRoute: ApiUazapiWebhookRoute,
+  ApiCronBirthdaysRoute: ApiCronBirthdaysRoute,
+  ApiCronReactivationRoute: ApiCronReactivationRoute,
+  ApiCronRemindersRoute: ApiCronRemindersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
