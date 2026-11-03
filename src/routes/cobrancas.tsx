@@ -43,14 +43,15 @@ function Cobrancas() {
       {pendingRefunds > 0 && <p className="mt-3 rounded-xl bg-st-noshow/20 p-3 text-sm">Você tem <b>{pendingRefunds}</b> {pendingRefunds === 1 ? "sinal" : "sinais"} para devolver. Clique em "Devolver sinal" na linha do cliente.</p>}
       <div className="mt-6 overflow-x-auto rounded-2xl bg-card shadow-card">
         <table className="w-full text-sm">
-          <thead className="text-left text-muted-foreground"><tr><th className="p-4">Data</th><th>Cliente</th><th>Valor</th><th>Status</th><th>ID Asaas</th><th></th></tr></thead>
+          <thead className="text-left text-muted-foreground"><tr><th className="p-4">Data</th><th>Cliente</th><th>Valor</th><th>Status</th><th>ID Asaas</th></tr></thead>
           <tbody className="divide-y">
-            {rows.length === 0 && <tr><td className="p-4 text-muted-foreground" colSpan={6}>Nenhuma cobrança ainda.</td></tr>}
+            {rows.length === 0 && <tr><td className="p-4 text-muted-foreground" colSpan={5}>Nenhuma cobrança ainda.</td></tr>}
             {rows.map((r) => (
               <tr key={r.id}><td className="p-4">{new Date(r.created_at).toLocaleDateString("pt-BR")}</td><td>{r.customers?.name}</td><td className="font-semibold">{brl(r.value)}</td>
-                <td><span className={`rounded-full px-2 py-1 text-xs ${r.status === "paid" ? "bg-st-confirmed/20" : r.status === "failed" || r.status === "refund_needed" ? "bg-st-noshow/20" : "bg-st-pending/20"}`}>{label[r.status] ?? r.status}</span></td>
+                <td><span className={`rounded-full px-2 py-1 text-xs ${r.status === "paid" ? "bg-st-confirmed/20" : r.status === "failed" || r.status === "refund_needed" ? "bg-st-noshow/20" : "bg-st-pending/20"}`}>{label[r.status] ?? r.status}</span>
+                  {(r.status === "refund_needed" || (r.status === "paid" && r.appointments?.status === "canceled")) && <Button size="sm" className="ml-2" disabled={busyId === r.id} onClick={() => refund(r)}>{busyId === r.id ? "Devolvendo…" : "Devolver sinal"}</Button>}</td>
                 <td className="font-mono text-xs text-muted-foreground">{r.asaas_payment_id ?? "—"}</td>
-                <td className="pr-4 text-right">{(r.status === "refund_needed" || (r.status === "paid" && r.appointments?.status === "canceled")) && <Button size="sm" disabled={busyId === r.id} onClick={() => refund(r)}>{busyId === r.id ? "Devolvendo…" : "Devolver sinal"}</Button>}</td></tr>
+</tr>
             ))}
           </tbody>
         </table>
