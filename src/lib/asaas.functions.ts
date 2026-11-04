@@ -169,6 +169,7 @@ export const createBooking = createServerFn({ method: "POST" })
     };
     const now = new Date().toISOString();
     let customer = await findCustomer();
+    const cpfOnFile: string | null = customer?.cpf ?? null; // CPF que já estava no cadastro (antes de completar com o digitado)
     let createdCustomer = false;
     if (customer) {
       const patch: Record<string, unknown> = { consent_at: now };
@@ -201,7 +202,7 @@ export const createBooking = createServerFn({ method: "POST" })
     }
     // Desconto de aniversário combinado no agendamento (o preço fica no serviço; o % fica aqui). Sem a coluna, segue sem registrar.
     try {
-      const pct = customer.cpf === cpf ? await birthdayPercentFor(admin, biz.id, customer) : 0; // vale só para o CPF cadastrado
+      const pct = cpfOnFile === cpf ? await birthdayPercentFor(admin, biz.id, customer) : 0; // vale só para o CPF cadastrado
       if (pct > 0) await admin.from("appointments").update({ discount_percent: pct }).eq("id", appt.id);
     } catch { /* recurso opcional */ }
 
