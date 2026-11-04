@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/AppShell";
 import { brl } from "@/lib/booking";
+import { adminCreateBusiness } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — ReservaPix" }, { name: "description", content: "Gestão da plataforma ReservaPix." }, { property: "og:title", content: "Admin — ReservaPix" }, { property: "og:description", content: "Gestão da plataforma ReservaPix." }] }),
@@ -209,6 +210,23 @@ function Geral({ ov, rows }: { ov: Overview | null; rows: BizRow[] }) {
 function Negocios({ rows, reload }: { rows: BizRow[]; reload: () => Promise<void> }) {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"todos" | "active" | "suspended">("todos");
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState({ name: "", slug: "", email: "", phone: "", plan: "trial" as "trial" | "starter" | "pro" });
+  const [saving, setSaving] = useState(false);
+  const slugify = (v: string) => v.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const create = async () => {
+    setSaving(true);
+    try {
+      const { data: s } = await supabase.auth.getSession();
+      if (!s.session) throw new Error("Sessão expirada. Entre de novo.");
+      const r = await adminCreateBusiness({ data: { accessToken: s.session.access_token, name: f.name, slug: f.slug, ownerEmail: f.email, phone: f.phone, plan: f.plan } });
+      toast.success(r.created ? (r.emailed ? "Negócio criado. O dono recebeu um e-mail para definir a senha." : "Negócio criado, mas o e-mail não foi enviado: peça ao dono para usar “Esqueci minha senha”.") : "Negócio criado para a conta que já existia.");
+      setOpen(false);
+      setF({ name: "", slug: "", email: "", phone: "", plan: "trial" });
+      reload();
+    } catch (e) { toast.error((e as Error).message); }
+    setSaving(false);
+  };
 
   const shown = rows.filter((r) => {
     if (filter !== "todos" && r.status !== filter) return false;
@@ -239,7 +257,22 @@ function Negocios({ rows, reload }: { rows: BizRow[]; reload: () => Promise<void
           <option value="suspended">Bloqueados</option>
         </select>
         <span className="self-center text-sm text-muted-foreground">{shown.length} de {rows.length}</span>
+        <Button className="ml-auto" onClick={() => setOpen(!open)}>{open ? "Fechar" : "Novo negócio"}</Button>
       </div>
+      {open && (
+        <div className="mt-4 grid gap-3 rounded-2xl bg-card p-5 shadow-card sm:grid-cols-2">
+          <label className="text-sm">Nome do negócio<Input className="mt-1" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value, slug: slugify(e.target.value) })} /></label>
+          <label className="text-sm">Endereço da página (/agendar/…)<Input className="mt-1" value={f.slug} onChange={(e) => setF({ ...f, slug: slugify(e.target.value) })} /></label>
+          <label className="text-sm">E-mail do dono<Input className="mt-1" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></label>
+          <label className="text-sm">WhatsApp (opcional)<Input className="mt-1" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></label>
+          <label className="text-sm">Plano inicial
+            <select className={`${selectCls} mt-1 block w-full`} value={f.plan} onChange={(e) => setF({ ...f, plan: e.target.value as typeof f.plan })}>
+              <option value="trial">Teste grátis (7 dias)</option><option value="starter">Starter (ativo 30 dias)</option><option value="pro">Pro (ativo 30 dias)</option>
+            </select>
+          </label>
+          <div className="flex items-end"><Button disabled={saving || f.name.trim().length < 2 || !f.slug || !f.email} onClick={create}>{saving ? "Criando…" : "Criar negócio"}</Button></div>
+        </div>
+      )}
       <div className="mt-4 overflow-x-auto rounded-2xl bg-card shadow-card">
         <table className="w-full min-w-[900px] text-left text-sm">
           <thead className="border-b text-xs uppercase text-muted-foreground">
