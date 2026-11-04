@@ -30,3 +30,9 @@ export const FEATURE_LABEL: Record<"reminder2h" | "birthday" | "reactivation" | 
   customFields: "Campos personalizados",
   banner: "Banner na página de agendamento",
 };
+
+// Checkout das assinaturas na Kiwify (o cliente deve usar o mesmo e-mail da conta no ReservaPix).
+export const KIWIFY_CHECKOUT: Record<PlanKey, string | null> = {
+  starter: "https://pay.kiwify.com.br/D7ITHDY",
+  pro: null, // colar aqui o link do plano Pro (R$ 99/mês) quando criado
+};

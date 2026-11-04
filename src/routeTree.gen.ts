@@ -20,6 +20,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AgendamentoTokenRouteImport } from './routes/agendamento.$token'
 import { Route as AgendarSlugRouteImport } from './routes/agendar.$slug'
 import { Route as ApiAsaasWebhookRouteImport } from './routes/api.asaas-webhook'
+import { Route as ApiKiwifyWebhookRouteImport } from './routes/api.kiwify-webhook'
 import { Route as ApiUazapiWebhookRouteImport } from './routes/api.uazapi-webhook'
 import { Route as ApiCronBirthdaysRouteImport } from './routes/api.cron.birthdays'
 import { Route as ApiCronReactivationRouteImport } from './routes/api.cron.reactivation'
@@ -75,6 +76,11 @@ const AgendarSlugRoute = AgendarSlugRouteImport.update({
   path: '/agendar/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiKiwifyWebhookRoute = ApiKiwifyWebhookRouteImport.update({
+  id: '/api/kiwify-webhook',
+  path: '/api/kiwify-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAsaasWebhookRoute = ApiAsaasWebhookRouteImport.update({
   id: '/api/asaas-webhook',
   path: '/api/asaas-webhook',
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/agendamento/$token': typeof AgendamentoTokenRoute
   '/agendar/$slug': typeof AgendarSlugRoute
   '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
+  '/api/kiwify-webhook': typeof ApiKiwifyWebhookRoute
   '/api/uazapi-webhook': typeof ApiUazapiWebhookRoute
   '/api/cron/birthdays': typeof ApiCronBirthdaysRoute
   '/api/cron/reactivation': typeof ApiCronReactivationRoute
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/agendamento/$token': typeof AgendamentoTokenRoute
   '/agendar/$slug': typeof AgendarSlugRoute
   '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
+  '/api/kiwify-webhook': typeof ApiKiwifyWebhookRoute
   '/api/uazapi-webhook': typeof ApiUazapiWebhookRoute
   '/api/cron/birthdays': typeof ApiCronBirthdaysRoute
   '/api/cron/reactivation': typeof ApiCronReactivationRoute
@@ -148,6 +156,7 @@ export interface FileRoutesById {
   '/agendamento/$token': typeof AgendamentoTokenRoute
   '/agendar/$slug': typeof AgendarSlugRoute
   '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
+  '/api/kiwify-webhook': typeof ApiKiwifyWebhookRoute
   '/api/uazapi-webhook': typeof ApiUazapiWebhookRoute
   '/api/cron/birthdays': typeof ApiCronBirthdaysRoute
   '/api/cron/reactivation': typeof ApiCronReactivationRoute
@@ -219,6 +228,7 @@ export interface RootRouteChildren {
   AgendamentoTokenRoute: typeof AgendamentoTokenRoute
   AgendarSlugRoute: typeof AgendarSlugRoute
   ApiAsaasWebhookRoute: typeof ApiAsaasWebhookRoute
+  ApiKiwifyWebhookRoute: typeof ApiKiwifyWebhookRoute
   ApiUazapiWebhookRoute: typeof ApiUazapiWebhookRoute
   ApiCronBirthdaysRoute: typeof ApiCronBirthdaysRoute
   ApiCronReactivationRoute: typeof ApiCronReactivationRoute
@@ -297,6 +307,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgendarSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/kiwify-webhook': {
+      id: '/api/kiwify-webhook'
+      path: '/api/kiwify-webhook'
+      fullPath: '/api/kiwify-webhook'
+      preLoaderRoute: typeof ApiKiwifyWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/asaas-webhook': {
       id: '/api/asaas-webhook'
       path: '/api/asaas-webhook'
@@ -347,6 +364,7 @@ const rootRouteChildren: RootRouteChildren = {
   AgendamentoTokenRoute: AgendamentoTokenRoute,
   AgendarSlugRoute: AgendarSlugRoute,
   ApiAsaasWebhookRoute: ApiAsaasWebhookRoute,
+  ApiKiwifyWebhookRoute: ApiKiwifyWebhookRoute,
   ApiUazapiWebhookRoute: ApiUazapiWebhookRoute,
   ApiCronBirthdaysRoute: ApiCronBirthdaysRoute,
   ApiCronReactivationRoute: ApiCronReactivationRoute,

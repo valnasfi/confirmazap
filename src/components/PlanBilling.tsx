@@ -4,7 +4,7 @@ import { Check, CreditCard, X } from "lucide-react";
 import { useBiz } from "@/components/AppShell";
 import { supabase } from "@/lib/supabaseClient";
 import { brl } from "@/lib/booking";
-import { FEATURE_LABEL, PLANS, type PlanKey, type PlanSpec } from "@/lib/plans";
+import { FEATURE_LABEL, KIWIFY_CHECKOUT, PLANS, type PlanKey, type PlanSpec } from "@/lib/plans";
 import { cancelSubscription, subscribePlan } from "@/lib/billing.functions";
 import { usePlan } from "@/lib/usePlan";
 import { Button } from "@/components/ui/button";
@@ -67,7 +67,7 @@ function PlanCard({ id, spec, current, pending, busy, onPick }: { id: PlanKey; s
 }
 
 export function PlanBilling() {
-  const { business, reload } = useBiz();
+  const { business, session, reload } = useBiz();
   const { info, refresh } = usePlan();
   const [busy, setBusy] = useState(false);
   const [asaas, setAsaas] = useState(business.asaas_api_key ?? "");
@@ -83,6 +83,13 @@ export function PlanBilling() {
   };
 
   const subscribe = async (plan: PlanKey) => {
+    const link = KIWIFY_CHECKOUT[plan];
+    if (link) {
+      const email = encodeURIComponent(session.user.email ?? "");
+      window.open(email ? `${link}?email=${email}` : link, "_blank", "noopener");
+      toast.success("Use o mesmo e-mail da sua conta ReservaPix. O plano é ativado sozinho após o pagamento.");
+      return;
+    }
     setBusy(true);
     try {
       const r = await subscribePlan({ data: { accessToken: await token(), plan } });
