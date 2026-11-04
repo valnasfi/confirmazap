@@ -1,12 +1,13 @@
 import type { getSupabaseAdmin } from "./supabaseAdmin";
 import { PLANS } from "./plans";
+import { siteUrl } from "./manage.core";
 
 type Admin = ReturnType<typeof getSupabaseAdmin>;
 type Obj = Record<string, unknown>;
 const o = (v: unknown): Obj => (v && typeof v === "object" ? (v as Obj) : {});
 const s = (v: unknown) => (typeof v === "string" ? v : typeof v === "number" ? String(v) : "");
 
-export type KiwifyChange = { email: string; plan: "starter" | "pro"; status: "active" | "past_due" | "canceled"; periodEnd: string | null; subId: string | null };
+export type KiwifyChange = { email: string; plan: "starter" | "pro"; status: "active" | "past_due" | "canceled"; periodEnd: string | null; subId: string | null; name?: string; phone?: string };
 
 // Lê o aviso da Kiwify com tolerância: nomes de campos podem variar entre eventos.
 export function parseKiwify(body: unknown): KiwifyChange | null {
@@ -29,12 +30,20 @@ export function parseKiwify(body: unknown): KiwifyChange | null {
   const next = Date.parse(s(sub["next_payment"]));
   const fallback = Date.now() + 33 * 86400_000;
   const end = Number.isFinite(next) && next > Date.now() ? next + 86400_000 : fallback;
-  return { email, plan, status, periodEnd: status === "canceled" ? null : new Date(end).toISOString(), subId: s(sub["id"]) || s(b["subscription_id"]) || null };
+  return { email, plan, status, periodEnd: status === "canceled" ? null : new Date(end).toISOString(), subId: s(sub["id"]) || s(b["subscription_id"]) || null, name: s(o(b["Customer"])["full_name"]).trim(), phone: s(o(b["Customer"])["mobile"]).replace(/\D/g, "") };
 }
 
 export async function applyKiwify(admin: Admin, c: KiwifyChange, keepPeriod = false) {
   const { data: biz } = await admin.from("businesses").select("id").ilike("email", c.email).limit(1).maybeSingle();
   if (!biz) {
+    // Primeira compra desse e-mail: cria o login e manda o convite para definir a senha (se já houver conta, só guarda o plano).
+    if (c.status === "active") {
+      const { data: seen } = await admin.from("kiwify_pending").select("email").eq("email", c.email).maybeSingle();
+      if (!seen) {
+        const { error } = await admin.auth.admin.inviteUserByEmail(c.email, { redirectTo: `${siteUrl()}/dashboard`, data: { full_name: c.name ?? "", phone: c.phone ?? "", needs_password: true } });
+        if (error && !/already|registered|exists/i.test(error.message)) console.error("kiwify-invite", error.message);
+      }
+    }
     await admin.from("kiwify_pending").upsert({ email: c.email, plan: c.plan, status: c.status, period_end: c.periodEnd, kiwify_subscription_id: c.subId, updated_at: new Date().toISOString() });
     return "pending";
   }

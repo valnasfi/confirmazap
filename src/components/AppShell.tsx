@@ -114,16 +114,23 @@ function Suspended({ reason }: { reason: string | null }) {
 }
 
 function CreateBusiness({ session, onDone }: { session: Session; onDone: () => void }) {
+  const meta = (session.user.user_metadata ?? {}) as { phone?: string; needs_password?: boolean };
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(meta.phone ? maskWhatsapp(meta.phone) : "");
   const [doc, setDoc] = useState("");
+  const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
+  const needsPw = meta.needs_password === true;
   const email = session.user.email ?? "";
-  const valid = name.trim().length >= 2 && !!slug && isValidEmail(email) && isValidPhone(phone) && isValidDocument(doc);
+  const valid = (!needsPw || pw.length >= 6) && name.trim().length >= 2 && !!slug && isValidEmail(email) && isValidPhone(phone) && isValidDocument(doc);
   const save = async () => {
     if (!isValidPhone(phone)) { setErr("Informe o telefone com DDD."); return; }
     if (!isValidDocument(doc)) { setErr("CPF ou CNPJ inválido. Confira os números."); return; }
+    if (needsPw) {
+      const { error: pe } = await supabase.auth.updateUser({ password: pw, data: { needs_password: false } });
+      if (pe) { setErr(pe.message); return; }
+    }
     const { error } = await supabase.from("businesses").insert({ name: name.trim(), slug, owner_id: session.user.id, email, phone: onlyDigits(phone), document: onlyDigits(doc), whatsapp: phone });
     if (error) setErr(/column|schema cache/i.test(error.message) ? "O cadastro ainda não foi atualizado no Supabase. Rode o SQL do cadastro e tente de novo." : error.message); else onDone();
   };
@@ -136,6 +143,7 @@ function CreateBusiness({ session, onDone }: { session: Session; onDone: () => v
           onChange={(e) => { setName(e.target.value); setSlug(e.target.value.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")); }} />
         <input className="mt-3 w-full rounded-lg border bg-background px-3 py-2" placeholder="slug" value={slug} onChange={(e) => setSlug(e.target.value)} />
         <input className="mt-3 w-full rounded-lg border bg-muted px-3 py-2 text-muted-foreground" type="email" readOnly aria-label="E-mail" value={email} />
+        {needsPw && <input className="mt-3 w-full rounded-lg border bg-background px-3 py-2" type="password" placeholder="Crie uma senha (mín. 6 caracteres)" aria-label="Senha" value={pw} onChange={(e) => setPw(e.target.value)} />}
         <input className="mt-3 w-full rounded-lg border bg-background px-3 py-2" placeholder="Telefone com DDD" inputMode="tel" value={phone} onChange={(e) => setPhone(maskWhatsapp(e.target.value))} />
         <input className="mt-3 w-full rounded-lg border bg-background px-3 py-2" placeholder="CPF ou CNPJ" inputMode="numeric" value={doc} onChange={(e) => setDoc(maskDocument(e.target.value))} />
         {err && <p className="mt-2 text-sm text-destructive">{err}</p>}
