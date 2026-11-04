@@ -50,12 +50,16 @@ function AdminPage() {
   const [ov, setOv] = useState<Overview | null>(null);
   const [rows, setRows] = useState<BizRow[]>([]);
 
-  const load = useCallback(async () => {
+  const [refreshing, setRefreshing] = useState(false);
+  const load = useCallback(async (manual = false) => {
+    setRefreshing(true);
     const [o, l] = await Promise.all([supabase.rpc("admin_overview"), supabase.rpc("admin_list_businesses")]);
+    setRefreshing(false);
     const err = o.error ?? l.error;
     if (err) { toast.error(err.message); return; }
     setOv(o.data as Overview);
     setRows((l.data as BizRow[]) ?? []);
+    if (manual) toast.success("Dados atualizados");
   }, []);
 
   useEffect(() => {
@@ -98,7 +102,7 @@ function AdminPage() {
             <button key={t.id} onClick={() => setTab(t.id)}
               className={`whitespace-nowrap px-4 py-2 text-sm ${tab === t.id ? "border-b-2 border-foreground font-semibold" : "text-muted-foreground"}`}>{t.label}</button>
           ))}
-          <button onClick={load} className="ml-auto whitespace-nowrap px-4 py-2 text-sm text-muted-foreground underline">Atualizar</button>
+          <button onClick={() => load(true)} disabled={refreshing} className="ml-auto whitespace-nowrap px-4 py-2 text-sm text-muted-foreground underline disabled:opacity-50">{refreshing ? "Atualizando…" : "Atualizar"}</button>
         </div>
         <div className="mt-6">
           {tab === "geral" && <Geral ov={ov} rows={rows} />}
