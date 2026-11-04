@@ -92,8 +92,9 @@ export const whatsappStatus = createServerFn({ method: "POST" })
     const { data: row, error } = await admin.from("whatsapp_connections").select("instance_token").eq("business_id", business.id).maybeSingle();
     if (error) throw new Error(tableHint(error.message));
     if (!row) return { exists: false, state: "disconnected", qrcode: null, paircode: null, phone: null, profileName: null };
-    const s = await uazapi("/instance/status", { token: row.instance_token });
-    if (!s.ok) throw new Error(`Não foi possível consultar o WhatsApp (${s.status}).`);
+    let s = await uazapi("/instance/status", { token: row.instance_token }).catch(() => ({ ok: false, status: 0, json: {} as any }));
+    if (!s.ok && (s.status >= 500 || s.status === 0)) s = await uazapi("/instance/status", { token: row.instance_token }).catch(() => ({ ok: false, status: 0, json: {} as any })); // tenta mais uma vez
+    if (!s.ok) throw new Error(s.status >= 500 || s.status === 0 ? `O servidor do WhatsApp está fora do ar no momento (erro ${s.status || "de conexão"}). Isso não é problema na sua conta: tente de novo em alguns minutos.` : `Não foi possível consultar o WhatsApp (${s.status}).`);
     const v = view(s.json);
     await save(admin, business.id, v);
     return { exists: true, ...v };
