@@ -47,6 +47,12 @@ async function asaas(apiKey: string, path: string, body?: unknown) {
   return json;
 }
 
+// Os avisos do Asaas (SMS/e-mail ao cliente) são cobrados por mensagem: o ReservaPix já avisa por WhatsApp.
+// Clientes antigos do Asaas foram criados com avisos ligados, então desliga antes de gerar a cobrança.
+async function muteCustomer(apiKey: string, customerId: string) {
+  try { await asaas(apiKey, `/customers/${customerId}`, { notificationDisabled: true }); } catch { /* segue sem travar a cobrança */ }
+}
+
 // O banco guarda os horários sem fuso (UTC): marca com "Z" para o navegador não ler como horário local.
 function asUtc(value: unknown) {
   const s = String(value);
@@ -204,7 +210,7 @@ export const createBooking = createServerFn({ method: "POST" })
     const key = apiKey as string; // garantido pela checagem acima (value > 0)
     try {
       // Reaproveita o cliente do Asaas se já existe; se a chave mudou e o ID não vale mais, cria outro.
-      const newAsaasCustomer = () => asaas(key, "/customers", { name: customer.name || data.name, cpfCnpj: customer.cpf || cpf, mobilePhone: phone });
+      const newAsaasCustomer = () => asaas(key, "/customers", { name: customer.name || data.name, cpfCnpj: customer.cpf || cpf, mobilePhone: phone, notificationDisabled: true });
       const dueDate = new Date(Date.now() - 3 * 3600_000).toISOString().slice(0, 10); // data em Brasília
       const createPayment = (asaasCustomerId: string) => asaas(key, "/payments", {
         customer: asaasCustomerId,
@@ -215,6 +221,7 @@ export const createBooking = createServerFn({ method: "POST" })
         externalReference: appt.id,
       });
       const known: string | null = customer.asaas_customer_id ?? null;
+      if (known) await muteCustomer(key, known);
       let ac: { id: string } = { id: known ?? (await newAsaasCustomer()).id };
       let pay;
       try {
@@ -316,6 +323,7 @@ export const chargeNoShow = createServerFn({ method: "POST" })
     }
     try {
       const due = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
+      await muteCustomer(apiKey, c.asaas_customer_id);
       const p = await asaas(apiKey, "/payments", {
         customer: c.asaas_customer_id, billingType: "PIX", value, dueDate: due,
         pixAutomaticAuthorizationId: c.pix_auth_id, description: "Taxa de não comparecimento",
