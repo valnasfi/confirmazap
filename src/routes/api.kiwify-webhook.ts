@@ -20,11 +20,14 @@ export const Route = createFileRoute("/api/kiwify-webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env["KIWIFY_TOKEN"];
-        if (!token) return new Response("KIWIFY_TOKEN não configurado", { status: 500 });
+        // Cada webhook da Kiwify tem o próprio token: KIWIFY_TOKEN aceita vários, separados por vírgula.
+        const tokens = (process.env["KIWIFY_TOKEN"] ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+        if (!tokens.length) return new Response("KIWIFY_TOKEN não configurado", { status: 500 });
         const raw = await request.text();
         const given = (new URL(request.url).searchParams.get("signature") ?? "").toLowerCase();
-        if (!safeEqual(given, await hmacHex(token, raw))) return new Response("unauthorized", { status: 401 });
+        let ok = false;
+        for (const tk of tokens) if (safeEqual(given, await hmacHex(tk, raw))) ok = true;
+        if (!ok) return new Response("unauthorized", { status: 401 });
         let body: unknown;
         try { body = JSON.parse(raw); } catch { return new Response("invalid json", { status: 400 }); }
         const change = parseKiwify(body);
