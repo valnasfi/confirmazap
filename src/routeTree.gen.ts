@@ -17,6 +17,7 @@ import { Route as CobrancasRouteImport } from './routes/cobrancas'
 import { Route as ConfigRouteImport } from './routes/config'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as AgendamentoTokenRouteImport } from './routes/agendamento.$token'
 import { Route as AgendarSlugRouteImport } from './routes/agendar.$slug'
 import { Route as ApiAsaasWebhookRouteImport } from './routes/api.asaas-webhook'
@@ -59,6 +60,11 @@ const ConfigRoute = ConfigRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
+  id: '/redefinir-senha',
+  path: '/redefinir-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/config': typeof ConfigRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/agendamento/$token': typeof AgendamentoTokenRoute
   '/agendar/$slug': typeof AgendarSlugRoute
   '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/config': typeof ConfigRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/agendamento/$token': typeof AgendamentoTokenRoute
   '/agendar/$slug': typeof AgendarSlugRoute
   '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
@@ -153,6 +161,7 @@ export interface FileRoutesById {
   '/config': typeof ConfigRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/agendamento/$token': typeof AgendamentoTokenRoute
   '/agendar/$slug': typeof AgendarSlugRoute
   '/api/asaas-webhook': typeof ApiAsaasWebhookRoute
@@ -173,6 +182,7 @@ export interface FileRouteTypes {
     | '/config'
     | '/dashboard'
     | '/login'
+    | '/redefinir-senha'
     | '/agendamento/$token'
     | '/agendar/$slug'
     | '/api/asaas-webhook'
@@ -190,6 +200,7 @@ export interface FileRouteTypes {
     | '/config'
     | '/dashboard'
     | '/login'
+    | '/redefinir-senha'
     | '/agendamento/$token'
     | '/agendar/$slug'
     | '/api/asaas-webhook'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/config'
     | '/dashboard'
     | '/login'
+    | '/redefinir-senha'
     | '/agendamento/$token'
     | '/agendar/$slug'
     | '/api/asaas-webhook'
@@ -225,6 +237,7 @@ export interface RootRouteChildren {
   ConfigRoute: typeof ConfigRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  RedefinirSenhaRoute: typeof RedefinirSenhaRoute
   AgendamentoTokenRoute: typeof AgendamentoTokenRoute
   AgendarSlugRoute: typeof AgendarSlugRoute
   ApiAsaasWebhookRoute: typeof ApiAsaasWebhookRoute
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/redefinir-senha': {
+      id: '/redefinir-senha'
+      path: '/redefinir-senha'
+      fullPath: '/redefinir-senha'
+      preLoaderRoute: typeof RedefinirSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -361,6 +381,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfigRoute: ConfigRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  RedefinirSenhaRoute: RedefinirSenhaRoute,
   AgendamentoTokenRoute: AgendamentoTokenRoute,
   AgendarSlugRoute: AgendarSlugRoute,
   ApiAsaasWebhookRoute: ApiAsaasWebhookRoute,

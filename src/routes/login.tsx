@@ -32,6 +32,12 @@ function Login() {
     nav({ to: "/dashboard" });
   };
 
+  const forgot = async () => {
+    if (!email) { toast.error("Digite seu e-mail acima e clique de novo."); return; }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + "/redefinir-senha" });
+    if (error) toast.error(error.message); else toast.success("Enviamos um link para redefinir a senha. Confira seu e-mail (e o spam).");
+  };
+
   return (
     <div className="grid min-h-screen md:grid-cols-2">
       <div className="hidden bg-hero p-10 md:flex md:flex-col md:justify-between">
@@ -45,6 +51,7 @@ function Login() {
           <Input type="email" placeholder="E-mail" required value={email} onChange={(e) => setEmail(e.target.value)} />
           <Input type="password" placeholder="Senha" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
           <Button className="w-full" disabled={busy}>{mode === "in" ? "Entrar" : "Cadastrar"}</Button>
+          {mode === "in" && <button type="button" className="w-full text-sm text-muted-foreground underline" onClick={forgot}>Esqueci minha senha</button>}
           <button type="button" className="w-full text-sm text-muted-foreground underline" onClick={() => setMode(mode === "in" ? "up" : "in")}>
             {mode === "in" ? "Não tem conta? Cadastre-se" : "Já tenho conta"}
           </button>
