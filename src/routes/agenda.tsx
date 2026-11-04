@@ -18,7 +18,7 @@ export const Route = createFileRoute("/agenda")({
   component: () => <AppShell><Agenda /></AppShell>,
 });
 
-type Appt = { id: string; start_at: string; end_at: string; status: string; customer_confirmed_at?: string | null; professionals?: { name: string } | null; customers: { name: string; whatsapp: string } | null; services: { name: string; deposit_value: number } | null };
+type Appt = { id: string; start_at: string; end_at: string; status: string; customer_confirmed_at?: string | null; discount_percent?: number | null; professionals?: { name: string } | null; customers: { name: string; whatsapp: string } | null; services: { name: string; deposit_value: number } | null };
 
 function Agenda() {
   const { business, session } = useBiz();
@@ -31,7 +31,8 @@ function Agenda() {
   const load = async () => {
     // customer_confirmed_at só existe depois do SQL dos lembretes: sem ele, a agenda continua funcionando.
     const base = "id,start_at,end_at,status,customers(name,whatsapp),services(name,deposit_value)";
-    let r: { data: unknown; error: { message: string } | null } = await supabase.from("appointments").select(`${base},customer_confirmed_at,professionals(name)`).eq("business_id", business.id).neq("status", "canceled").or(activeHoldFilter());
+    let r: { data: unknown; error: { message: string } | null } = await supabase.from("appointments").select(`${base},customer_confirmed_at,professionals(name),discount_percent`).eq("business_id", business.id).neq("status", "canceled").or(activeHoldFilter());
+    if (r.error) r = await supabase.from("appointments").select(`${base},customer_confirmed_at,professionals(name)`).eq("business_id", business.id).neq("status", "canceled").or(activeHoldFilter());
     if (r.error) r = await supabase.from("appointments").select(`${base},customer_confirmed_at`).eq("business_id", business.id).neq("status", "canceled").or(activeHoldFilter());
     if (r.error) r = await supabase.from("appointments").select(base).eq("business_id", business.id).neq("status", "canceled").or(activeHoldFilter());
     setItems((r.data as unknown as Appt[]) ?? []);
@@ -80,7 +81,7 @@ function Agenda() {
   const [proFilter, setProFilter] = useState("");
   const events = items.filter((a) => !proFilter || a.professionals?.name === proFilter).map((a) => ({
     id: a.id, start: asUtc(a.start_at), end: asUtc(a.end_at),
-    title: `${proNames.length > 1 && a.professionals?.name ? `${a.professionals.name} — ` : ""}${a.customers?.name ?? ""} · ${a.services?.name ?? ""}`,
+    title: `${proNames.length > 1 && a.professionals?.name ? `${a.professionals.name} — ` : ""}${a.customers?.name ?? ""} · ${a.services?.name ?? ""}${a.discount_percent ? ` 🎂 -${a.discount_percent}%` : ""}`,
     backgroundColor: statusMeta[a.status]?.color, borderColor: statusMeta[a.status]?.color,
   }));
   // Janela do calendário: do funcionamento da empresa, ampliada se já houver agendamentos fora dele; dias fechados ficam escondidos (a menos que tenham agendamentos).

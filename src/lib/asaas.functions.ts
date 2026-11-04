@@ -6,6 +6,7 @@ import { getEntitlements, getUsage } from "./plans.core";
 import { siteUrl, toWaNumber, firstName } from "./manage.core";
 import { uazapi } from "./uazapi";
 import { DEFAULT_NOSHOW_MESSAGE } from "./birthday";
+import { birthdayPercentFor } from "./discount.functions";
 import { sendBookingConfirmed } from "./booking-notify";
 import { reconcilePending } from "./payments.core";
 import { readSchedule, slotAllowed } from "./schedule";
@@ -198,6 +199,11 @@ export const createBooking = createServerFn({ method: "POST" })
       if (createdCustomer) await admin.from("customers").delete().eq("id", customer.id);
       throw new Error(aErr.message);
     }
+    // Desconto de aniversário combinado no agendamento (o preço fica no serviço; o % fica aqui). Sem a coluna, segue sem registrar.
+    try {
+      const pct = await birthdayPercentFor(admin, biz.id, customer);
+      if (pct > 0) await admin.from("appointments").update({ discount_percent: pct }).eq("id", appt.id);
+    } catch { /* recurso opcional */ }
 
     // Serviço sem sinal: não há o que cobrar, o horário já fica confirmado.
     if (value <= 0) {

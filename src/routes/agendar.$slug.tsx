@@ -9,6 +9,7 @@ import { getSchedule } from "@/lib/schedule.functions";
 
 type Pro = { id: string; name: string };
 import { getBusySlots, createBooking, getBookingStatus } from "@/lib/asaas.functions";
+import { getBirthdayDiscount } from "@/lib/discount.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -41,6 +42,14 @@ function Booking() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [cpf, setCpf] = useState("");
+  const [bdPct, setBdPct] = useState(0);
+  // Aniversariante (data de nascimento no cadastro do negócio): mostra o preço com desconto.
+  useEffect(() => {
+    const digits = phone.replace(/\D/g, "");
+    if (!biz || digits.length < 10) { setBdPct(0); return; }
+    const h = setTimeout(() => { getBirthdayDiscount({ data: { businessId: biz.id, whatsapp: phone } }).then((r) => setBdPct(r.percent)).catch(() => setBdPct(0)); }, 500);
+    return () => clearTimeout(h);
+  }, [phone, biz]);
   const [ok, setOk] = useState(false);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ appointmentId: string; value: number; qrCode: string | null; pixCopyAndPaste: string | null; manageToken: string | null } | null>(null);
@@ -209,6 +218,7 @@ function Booking() {
             <Input placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} />
             <Input placeholder="(11) 98765-4321" inputMode="tel" value={phone} onChange={(e) => setPhone(maskWhatsapp(e.target.value))} />
             <Input placeholder="CPF (exigido pelo Pix)" inputMode="numeric" value={cpf} onChange={(e) => setCpf(e.target.value.replace(/\D/g, "").slice(0, 11))} />
+            {bdPct > 0 && <p className="rounded-xl bg-accent p-3 text-sm text-accent-foreground">🎂 Feliz aniversário! Você ganhou <b>{bdPct}% de desconto</b>: o serviço sai por <s className="opacity-70">{brl(svc.price)}</s> <b>{brl(Math.round(Number(svc.price) * (100 - bdPct)) / 100)}</b>, pago no atendimento.</p>}
             <label className="flex gap-3 rounded-xl bg-muted p-3 text-sm">
               <Checkbox checked={ok} onCheckedChange={(v) => setOk(v === true)} className="mt-0.5" />
               <span>Estou ciente de que o horário só fica confirmado após o pagamento do sinal de {brl(svc.deposit_value)} via Pix, e que a reserva fica guardada por {HOLD_MINUTES} minutos. Li os termos.</span>

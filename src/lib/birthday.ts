@@ -1,7 +1,23 @@
 // Mensagem de aniversário: o texto é do profissional (settings.birthday.message); {nome} e {negocio} são trocados no envio.
 export const DEFAULT_BIRTHDAY_MESSAGE = "Feliz aniversário, {nome}! 🎉 Toda a equipe da {negocio} deseja um dia muito especial para você.";
 
-export type BirthdaySettings = { enabled?: boolean; message?: string };
+export type BirthdaySettings = { enabled?: boolean; message?: string; discountPercent?: number };
+
+// Desconto de aniversário: vale por 7 dias, contando do dia do aniversário (datas em Brasília). Devolve o % ou 0.
+export const BIRTHDAY_DISCOUNT_DAYS = 7;
+export function birthdayDiscountPercent(birthDate: string | null | undefined, percent: number | undefined, nowMs = Date.now()) {
+  const pct = Math.min(50, Math.max(0, Math.round(Number(percent) || 0)));
+  if (!pct || !birthDate) return 0;
+  const [, m, d] = String(birthDate).split("-").map(Number);
+  if (!m || !d) return 0;
+  const br = new Date(nowMs - 3 * 3600_000);
+  const today = Date.UTC(br.getUTCFullYear(), br.getUTCMonth(), br.getUTCDate());
+  for (const y of [br.getUTCFullYear(), br.getUTCFullYear() - 1]) {
+    const diff = Math.round((today - Date.UTC(y, m - 1, d)) / 86400_000);
+    if (diff >= 0 && diff < BIRTHDAY_DISCOUNT_DAYS) return pct;
+  }
+  return 0;
+}
 
 export function renderBirthday(template: string, fullName: string | null, businessName: string) {
   const first = (fullName ?? "").trim().split(/\s+/)[0] || "cliente";
