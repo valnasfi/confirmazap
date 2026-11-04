@@ -201,7 +201,7 @@ export const createBooking = createServerFn({ method: "POST" })
     }
     // Desconto de aniversário combinado no agendamento (o preço fica no serviço; o % fica aqui). Sem a coluna, segue sem registrar.
     try {
-      const pct = await birthdayPercentFor(admin, biz.id, customer);
+      const pct = customer.cpf === cpf ? await birthdayPercentFor(admin, biz.id, customer) : 0; // vale só para o CPF cadastrado
       if (pct > 0) await admin.from("appointments").update({ discount_percent: pct }).eq("id", appt.id);
     } catch { /* recurso opcional */ }
 

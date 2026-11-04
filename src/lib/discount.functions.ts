@@ -17,12 +17,13 @@ export async function birthdayPercentFor(admin: Admin, businessId: string, custo
   return birthdayDiscountPercent(customer.birth_date, cfg.discountPercent);
 }
 
-// A página de agendamento pergunta pelo WhatsApp digitado; só devolve o percentual, nunca dados do cliente.
+// A página de agendamento pergunta pelo CPF digitado (vínculo mais seguro que o telefone); só devolve o percentual, nunca dados do cliente.
 export const getBirthdayDiscount = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ businessId: z.string().uuid(), whatsapp: z.string().min(10).max(20) }).parse(i))
+  .inputValidator((i: unknown) => z.object({ businessId: z.string().uuid(), cpf: z.string().min(11).max(18) }).parse(i))
   .handler(async ({ data }) => {
     const admin = getSupabaseAdmin();
-    const phone = data.whatsapp.replace(/\D/g, "");
-    const { data: c } = await admin.from("customers").select("birth_date").eq("business_id", data.businessId).eq("whatsapp", phone).limit(1).maybeSingle();
+    const cpf = data.cpf.replace(/\D/g, "");
+    if (cpf.length !== 11) return { percent: 0 };
+    const { data: c } = await admin.from("customers").select("birth_date").eq("business_id", data.businessId).eq("cpf", cpf).limit(1).maybeSingle();
     return { percent: await birthdayPercentFor(admin, data.businessId, c) };
   });

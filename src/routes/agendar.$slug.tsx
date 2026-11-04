@@ -43,13 +43,12 @@ function Booking() {
   const [phone, setPhone] = useState("");
   const [cpf, setCpf] = useState("");
   const [bdPct, setBdPct] = useState(0);
-  // Aniversariante (data de nascimento no cadastro do negócio): mostra o preço com desconto.
+  // Aniversariante (CPF com data de nascimento no cadastro do negócio): mostra o preço com desconto.
   useEffect(() => {
-    const digits = phone.replace(/\D/g, "");
-    if (!biz || digits.length < 10) { setBdPct(0); return; }
-    const h = setTimeout(() => { getBirthdayDiscount({ data: { businessId: biz.id, whatsapp: phone } }).then((r) => setBdPct(r.percent)).catch(() => setBdPct(0)); }, 500);
+    if (!biz || cpf.length !== 11) { setBdPct(0); return; }
+    const h = setTimeout(() => { getBirthdayDiscount({ data: { businessId: biz.id, cpf } }).then((r) => setBdPct(r.percent)).catch(() => setBdPct(0)); }, 400);
     return () => clearTimeout(h);
-  }, [phone, biz]);
+  }, [cpf, biz]);
   const [ok, setOk] = useState(false);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ appointmentId: string; value: number; qrCode: string | null; pixCopyAndPaste: string | null; manageToken: string | null } | null>(null);
