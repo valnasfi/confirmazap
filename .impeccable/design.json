@@ -1,0 +1,331 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-06T17:05:00Z",
+  "title": "Design System: ReservaPix",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Verde Pix",
+        "canonical": "oklch(0.52 0.13 160)",
+        "tonalRamp": [
+          "oklch(0.18 0.05 160)",
+          "oklch(0.28 0.08 160)",
+          "oklch(0.38 0.11 160)",
+          "oklch(0.52 0.13 160)",
+          "oklch(0.64 0.12 160)",
+          "oklch(0.76 0.09 160)",
+          "oklch(0.87 0.05 160)",
+          "oklch(0.95 0.02 160)"
+        ]
+      },
+      "accent": {
+        "role": "secondary",
+        "displayName": "Limão Caixa",
+        "canonical": "oklch(0.88 0.17 125)",
+        "tonalRamp": [
+          "oklch(0.2 0.05 125)",
+          "oklch(0.32 0.08 125)",
+          "oklch(0.45 0.11 125)",
+          "oklch(0.6 0.14 125)",
+          "oklch(0.74 0.16 125)",
+          "oklch(0.88 0.17 125)",
+          "oklch(0.93 0.1 125)",
+          "oklch(0.97 0.04 125)"
+        ]
+      },
+      "ink": {
+        "role": "tertiary",
+        "displayName": "Floresta Noturna",
+        "canonical": "oklch(0.24 0.05 168)",
+        "tonalRamp": [
+          "oklch(0.15 0.03 168)",
+          "oklch(0.24 0.05 168)",
+          "oklch(0.32 0.06 165)",
+          "oklch(0.42 0.06 165)",
+          "oklch(0.55 0.05 165)",
+          "oklch(0.7 0.04 165)",
+          "oklch(0.84 0.03 165)",
+          "oklch(0.95 0.015 165)"
+        ]
+      },
+      "ink-foreground": {
+        "role": "neutral",
+        "displayName": "Névoa sobre Floresta",
+        "canonical": "oklch(0.96 0.03 140)"
+      },
+      "ink-raised": {
+        "role": "tertiary",
+        "displayName": "Floresta Elevada",
+        "canonical": "oklch(0.32 0.06 165)"
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Menta Névoa",
+        "canonical": "oklch(0.975 0.012 150)"
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Verde Tinta",
+        "canonical": "oklch(0.22 0.04 165)"
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Branco Card",
+        "canonical": "oklch(1 0 0)"
+      },
+      "secondary": {
+        "role": "neutral",
+        "displayName": "Menta Suave",
+        "canonical": "oklch(0.93 0.03 150)"
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Menta Suave (muted)",
+        "canonical": "oklch(0.94 0.015 150)"
+      },
+      "muted-foreground": {
+        "role": "neutral",
+        "displayName": "Musgo Cinza",
+        "canonical": "oklch(0.48 0.03 165)"
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Linha Menta",
+        "canonical": "oklch(0.89 0.02 155)"
+      },
+      "destructive": {
+        "role": "error",
+        "displayName": "Erro",
+        "canonical": "oklch(0.58 0.21 27)"
+      },
+      "status-pending": {
+        "role": "status",
+        "displayName": "Pendente",
+        "canonical": "oklch(0.83 0.16 85)"
+      },
+      "status-confirmed": {
+        "role": "status",
+        "displayName": "Confirmado",
+        "canonical": "oklch(0.62 0.15 150)"
+      },
+      "status-showed": {
+        "role": "status",
+        "displayName": "Compareceu",
+        "canonical": "oklch(0.55 0.12 230)"
+      },
+      "status-noshow": {
+        "role": "status",
+        "displayName": "Falta",
+        "canonical": "oklch(0.6 0.21 27)"
+      },
+      "status-canceled": {
+        "role": "status",
+        "displayName": "Cancelado",
+        "canonical": "oklch(0.65 0.01 160)"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Só o título do hero da landing (2.25rem no celular, 3.75rem no desktop)."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Títulos de seção da landing; 'Olá, {negócio}' no painel a 1.875rem."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Títulos de seção e de card no painel."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Números e valores em reais; sempre Sora 700."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Parágrafos."
+      },
+      "body-sm": {
+        "displayName": "Body small",
+        "purpose": "Descrições, rótulos de métrica, nav, botões do painel."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Pílulas de status, legendas, notas de card."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card",
+        "value": "0 1px 0 color-mix(in oklab, var(--foreground) 6%, transparent), 0 12px 30px -18px color-mix(in oklab, var(--primary) 45%, transparent)",
+        "purpose": "Todos os cards: linha fina embaixo e brilho verde difuso."
+      },
+      {
+        "name": "cta",
+        "value": "0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.2)",
+        "purpose": "Só os CTAs limão sobre ink na landing."
+      },
+      {
+        "name": "hero-agenda",
+        "value": "0 30px 60px -30px rgb(0 0 0 / 0.55)",
+        "purpose": "Painel de agenda simulado do hero."
+      },
+      {
+        "name": "phone-sim",
+        "value": "0 30px 60px -28px rgb(0 0 0 / 0.55), inset 0 0 0 1.5px oklch(0.42 0.01 160)",
+        "purpose": "Moldura de iPhone das mini telas."
+      }
+    ],
+    "gradients": [
+      {
+        "name": "hero",
+        "value": "radial-gradient(1200px 500px at 85% -10%, color-mix(in oklab, var(--accent) 45%, transparent), transparent 60%), linear-gradient(160deg, var(--ink), oklch(0.3 0.07 160))",
+        "purpose": "Hero da landing e topo da página pública de agendamento."
+      }
+    ],
+    "motion": [
+      {
+        "name": "color-transition",
+        "value": "150ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Padrão do Tailwind para hover de botões e links."
+      },
+      {
+        "name": "card-lift",
+        "value": "translateY(-2px)",
+        "purpose": "Hover dos cards de recurso da landing."
+      },
+      {
+        "name": "cta-brighten",
+        "value": "filter: brightness(1.1)",
+        "purpose": "Hover dos CTAs limão."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ação comum do painel: salvar, criar, confirmar.",
+      "html": "<button class=\"ds-btn-primary\">Salvar serviço</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 36px; padding: 8px 16px; border: none; border-radius: 12px; background: var(--primary, oklch(0.52 0.13 160)); color: var(--primary-foreground, oklch(0.99 0.01 150)); font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; box-shadow: 0 1px 3px rgb(0 0 0 / 0.1); cursor: pointer; transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-primary:hover { background: color-mix(in oklab, var(--primary, oklch(0.52 0.13 160)) 90%, transparent); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 1px var(--ring, oklch(0.52 0.13 160)); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Ação secundária do painel; hover em limão.",
+      "html": "<button class=\"ds-btn-outline\">Cancelar</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 8px 16px; border: 1px solid var(--input, oklch(0.89 0.02 155)); border-radius: 12px; background: var(--background, oklch(0.975 0.012 150)); color: var(--foreground, oklch(0.22 0.04 165)); font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), color 150ms; } .ds-btn-outline:hover { background: var(--accent, oklch(0.88 0.17 125)); color: var(--accent-foreground, oklch(0.22 0.05 150)); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 1px var(--ring, oklch(0.52 0.13 160)); }"
+    },
+    {
+      "name": "Landing CTA",
+      "kind": "button",
+      "refersTo": "button-cta",
+      "description": "Ação principal da landing: \"Teste grátis\". Limão sobre ink; sobre fundos claros vira ink com seta limão.",
+      "html": "<div style=\"background: oklch(0.24 0.05 168); padding: 24px;\"><a class=\"ds-btn-cta\" href=\"#\">Teste grátis <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></a></div>",
+      "css": ".ds-btn-cta { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 24px; border-radius: 18px; background: var(--accent, oklch(0.88 0.17 125)); color: var(--accent-foreground, oklch(0.22 0.05 150)); font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 1rem; font-weight: 700; text-decoration: none; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.2); transition: filter 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-cta:hover { filter: brightness(1.1); } .ds-btn-cta:focus-visible { outline: 2px solid var(--ink-foreground, oklch(0.96 0.03 140)); outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo padrão do painel e dos formulários.",
+      "html": "<input class=\"ds-input\" placeholder=\"Telefone com DDD\" />",
+      "css": ".ds-input { width: 100%; max-width: 320px; height: 36px; padding: 4px 12px; border: 1px solid var(--input, oklch(0.89 0.02 155)); border-radius: 12px; background: var(--background, oklch(0.975 0.012 150)); color: var(--foreground, oklch(0.22 0.04 165)); font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); transition: box-shadow 150ms; } .ds-input::placeholder { color: var(--muted-foreground, oklch(0.48 0.03 165)); } .ds-input:focus-visible { outline: none; box-shadow: 0 0 0 1px var(--ring, oklch(0.52 0.13 160)); }"
+    },
+    {
+      "name": "Status Pill",
+      "kind": "chip",
+      "refersTo": "status-pill",
+      "description": "Status do agendamento: cor do status a 20% e texto foreground.",
+      "html": "<span class=\"ds-pill ds-pill-pending\">Pendente</span> <span class=\"ds-pill ds-pill-confirmed\">Confirmado</span> <span class=\"ds-pill ds-pill-showed\">Compareceu</span> <span class=\"ds-pill ds-pill-noshow\">Falta</span> <span class=\"ds-pill ds-pill-canceled\">Cancelado</span>",
+      "css": ".ds-pill { display: inline-block; padding: 4px 12px; border-radius: 9999px; color: var(--foreground, oklch(0.22 0.04 165)); font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; } .ds-pill-pending { background: color-mix(in oklab, oklch(0.83 0.16 85) 20%, transparent); } .ds-pill-confirmed { background: color-mix(in oklab, oklch(0.62 0.15 150) 20%, transparent); } .ds-pill-showed { background: color-mix(in oklab, oklch(0.55 0.12 230) 20%, transparent); } .ds-pill-noshow { background: color-mix(in oklab, oklch(0.6 0.21 27) 20%, transparent); } .ds-pill-canceled { background: color-mix(in oklab, oklch(0.65 0.01 160) 25%, transparent); }"
+    },
+    {
+      "name": "Metric Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Assinatura do painel: rótulo pequeno e valor grande em Sora. Um por grade fica em ink.",
+      "html": "<div class=\"ds-metrics\"><div class=\"ds-metric\"><p class=\"ds-metric-l\">Agendamentos hoje</p><p class=\"ds-metric-v\">12</p></div><div class=\"ds-metric ds-metric-hi\"><p class=\"ds-metric-l\">Sinais recebidos no mês</p><p class=\"ds-metric-v\">R$ 1.240,00</p></div></div>",
+      "css": ".ds-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; } .ds-metric { border-radius: 22px; padding: 20px; background: var(--card, oklch(1 0 0)); color: var(--foreground, oklch(0.22 0.04 165)); box-shadow: 0 1px 0 color-mix(in oklab, oklch(0.22 0.04 165) 6%, transparent), 0 12px 30px -18px color-mix(in oklab, oklch(0.52 0.13 160) 45%, transparent); } .ds-metric-hi { background: var(--ink, oklch(0.24 0.05 168)); color: var(--ink-foreground, oklch(0.96 0.03 140)); } .ds-metric-l { margin: 0; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; opacity: 0.7; } .ds-metric-v { margin: 8px 0 0; font-family: Sora, ui-sans-serif, system-ui, sans-serif; font-size: 1.875rem; font-weight: 700; letter-spacing: -0.02em; }"
+    },
+    {
+      "name": "Sidebar Nav",
+      "kind": "nav",
+      "refersTo": "sidebar",
+      "description": "Navegação do painel a partir de 768px, em ink.",
+      "html": "<nav class=\"ds-sidebar\"><a class=\"ds-side-item ds-side-active\" href=\"#\">Painel</a><a class=\"ds-side-item\" href=\"#\">Agenda</a><a class=\"ds-side-item\" href=\"#\">Clientes</a><a class=\"ds-side-item\" href=\"#\">Cobranças</a></nav>",
+      "css": ".ds-sidebar { display: flex; flex-direction: column; gap: 4px; width: 240px; padding: 20px; background: var(--ink, oklch(0.24 0.05 168)); color: var(--ink-foreground, oklch(0.96 0.03 140)); font-family: Manrope, ui-sans-serif, system-ui, sans-serif; } .ds-side-item { padding: 8px 12px; border-radius: 14px; color: inherit; font-size: 0.875rem; text-decoration: none; opacity: 0.8; transition: background-color 150ms, opacity 150ms; } .ds-side-item:hover { background: oklch(0.32 0.06 165); opacity: 1; } .ds-side-active { background: oklch(0.32 0.06 165); opacity: 1; font-weight: 600; } .ds-side-item:focus-visible { outline: 1px solid var(--accent, oklch(0.88 0.17 125)); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "A Agenda que Não Vaza",
+    "overview": "O ReservaPix passa a sensação de agenda segura: fundos verde-floresta quase pretos (ink) dão peso e confiança, e o verde-limão aparece só onde há dinheiro ou uma ação que protege dinheiro. O verde do Pix é a cor de trabalho do painel. Tudo fica em uma família de verdes frios. Não existe uma segunda cor de marca, e o vermelho fica reservado para falta e erro.\n\nO sistema tem dois registros. A landing é ousada: hero com gradiente ink, títulos grandes em Sora, CTAs em limão, cards arredondados com sombra esverdeada. O painel é preciso e contido: tipografia menor, botões compactos do shadcn, cards brancos sobre fundo menta claro, e o ink só como sidebar e como card de destaque para o número que mais importa. A ousadia da landing não vaza para o painel.\n\nA densidade do painel é média: grades de cards de métrica (2 colunas no tablet, 4 ou 5 no desktop), listas divididas por linha dentro de um card, e números grandes em Sora para valores em reais. O painel não tem modo escuro. As superfícies escuras são escolhas de composição (sidebar, cards de destaque, seções da landing), não um tema.",
+    "keyCharacteristics": [
+      "Família única de verdes frios (matiz 125–170) do ink ao fundo menta.",
+      "Limão (accent) como sinal de dinheiro e ação principal, nunca como fundo de área grande no painel.",
+      "Sora para títulos e números, Manrope para tudo o que se lê.",
+      "Landing ousada, painel contido: o mesmo vocabulário em dois volumes.",
+      "Status de agendamento com cinco cores próprias, sempre em pílula translúcida."
+    ],
+    "rules": [
+      {
+        "name": "The Lime Means Money Rule",
+        "body": "O limão marca dinheiro ou a ação que protege dinheiro: CTA de cadastro, preço, valor perdido, valor protegido. Ele não é usado como enfeite, em texto de corpo ou em fundo de área grande clara.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Ink Card Rule",
+        "body": "Em cada grade de métricas do painel, só um card fica em ink: o número que responde \"quanto dinheiro\" (sinais recebidos, faltas evitadas, total do dia). Os outros ficam em branco.",
+        "section": "colors"
+      },
+      {
+        "name": "The Status Is Sacred Rule",
+        "body": "As cinco cores de status são exclusivas do ciclo do agendamento. Não use o âmbar para alertas genéricos nem o azul para links.",
+        "section": "colors"
+      },
+      {
+        "name": "The Numbers Wear Sora Rule",
+        "body": "Todo valor que o dono do negócio olha para decidir (contagem, porcentagem, R$) é Sora em negrito, maior que o rótulo. O rótulo fica acima, em body small a 70% de opacidade.",
+        "section": "typography"
+      },
+      {
+        "name": "The Green Glow Rule",
+        "body": "Card levantado usa shadow-card, nunca uma sombra cinza genérica. A sombra carrega o matiz do primary.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do usar os tokens do src/styles.css (bg-primary, bg-ink, bg-accent, shadow-card, bg-st-*) em vez de cores soltas; as exceções hoje são a moldura e o fundo do chat dos celulares simulados da landing.",
+      "Do manter o painel no volume contido: botões de 36px, títulos de seção a 1.25rem, cards brancos com shadow-card.",
+      "Do escrever todo valor em reais e toda métrica em Sora 700, com o rótulo menor acima.",
+      "Do reservar o limão para dinheiro e para a ação principal (The Lime Means Money Rule).",
+      "Do usar a pílula de status com a cor do status a 20% e texto foreground sempre que mostrar um agendamento.",
+      "Do manter campos a 1rem no celular para não dar zoom no iOS."
+    ],
+    "donts": [
+      "Don't trazer o volume da landing (títulos de 3.75rem, CTAs limão de 18px, gradiente do hero) para dentro do painel.",
+      "Don't colocar mais de um card ink em uma mesma grade de métricas.",
+      "Don't usar as cores de status (âmbar, azul, vermelho, cinza) para algo fora do ciclo do agendamento.",
+      "Don't usar preto puro para texto ou sombra cinza neutra em cards; o texto é Verde Tinta e a sombra do card é verde.",
+      "Don't introduzir uma segunda cor de marca fora da família verde.",
+      "Don't adicionar modo escuro como tema global; as superfícies escuras são composição, não tema."
+    ]
+  }
+}
