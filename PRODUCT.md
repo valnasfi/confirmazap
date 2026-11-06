@@ -43,11 +43,12 @@ O cliente se compromete pagando antes: o sinal por Pix cai na conta Asaas do neg
 - Nome: **ReservaPix** (antes ConfirmaZap; o repositório ainda usa o nome antigo). Domínio: reservapix.vip. Logo e favicon em `public/logo.png`, `public/icon.png`, `public/favicon.ico`.
 - Voz da landing atual: português direto e coloquial, falando do dinheiro perdido com falta ("Toda falta é dinheiro que você deixou na mesa", "Planos simples, sem pegadinha"). Sem jargão técnico.
 - Rodapé da landing: "Feito com ❤ por VNF Digital" (definido pelo usuário em 2026-11-06).
+- WhatsApp comercial do ReservaPix: (11) 95326-1958. É um número real; hoje aparece na mini tela de WhatsApp da landing.
 
 ## Evidence on Hand
 
 - **Ainda não há prova real:** nenhum depoimento, nenhum cliente citável, nenhum número de faltas evitadas. O trabalho futuro não pode inventar depoimentos, logos de clientes, métricas ou contagem de usuários.
-- O que existe: o próprio produto funcionando e as simulações da landing (agenda do hero, mini telas de /agendar, Pix e WhatsApp do salão fictício "Studio Bela"), sempre identificadas como "Simulação". A foto do avatar do Studio Bela (`public/landing/studio-bela-whatsapp.jpg`) foi fornecida pelo usuário.
+- O que existe: o próprio produto funcionando e as simulações da landing (agenda do hero, mini telas de /agendar, Pix e WhatsApp do salão fictício "Studio Bela"), sempre identificadas como "Simulação". A foto do avatar do Studio Bela (`public/landing/studio-bela-whatsapp.jpg`) foi fornecida pelo usuário, que pagou a licença de uso.
 
 ## Product Principles
 

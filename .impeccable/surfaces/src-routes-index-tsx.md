@@ -25,5 +25,5 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 ## Assets
 
-- `public/landing/studio-bela-whatsapp.jpg`: foto enviada pelo usuário no chat para o avatar fictício do Studio Bela (mini telas de /agendar e WhatsApp); recortada e reduzida para 160x160. Origem: fornecida pelo usuário; direitos de uso a confirmar por ele.
+- `public/landing/studio-bela-whatsapp.jpg`: foto enviada pelo usuário no chat para o avatar fictício do Studio Bela (mini telas de /agendar e WhatsApp); recortada e reduzida para 160x160. Origem: fornecida pelo usuário, com licença paga por ele (confirmado em 2026-11-06).
 - Celular das mini telas: moldura no formato de iPhone desenhada em CSS, a pedido do usuário.
