@@ -246,9 +246,9 @@ function Feature({ id, title, text, points, screen, flip }: { id?: string; title
         </ul>
       </div>
       <div data-reveal className={`rp-reveal ${flip ? "md:order-1" : ""}`}>
-        <div className="relative rounded-[1.75rem] bg-secondary/70 px-5 pb-10 pt-6 sm:px-8 sm:pb-12 sm:pt-8">
+        <div className="relative overflow-hidden rounded-[1.75rem] bg-secondary/70 px-5 pb-10 pt-6 sm:px-8 sm:pb-12 sm:pt-8">
           {screen}
-          <span className="absolute bottom-3 right-4 text-[11px] text-muted-foreground">Simulação da tela</span>
+          <span className="absolute bottom-3 right-4 rounded-full bg-background/80 px-2 py-0.5 text-[11px] text-muted-foreground backdrop-blur">Simulação da tela</span>
         </div>
       </div>
     </div>
@@ -289,25 +289,33 @@ function Features() {
   );
 }
 
-/* Celular no formato de um iPhone: moldura fina, ilha no topo, barra de status e indicador de início. */
+/*
+ * Foto de uma mão segurando um iPhone (public/landing/iphone-mao.webp), com o fundo
+ * e a tela recortados. A tela de verdade é HTML, encaixada no buraco da foto.
+ * Medidas em pixels da foto (1042 x 1249); K converte para pixels de CSS.
+ */
+const HAND = { w: 1042, h: 1249, screenX: 139, screenY: 19, screenW: 467, screenH: 996, radius: 68, phoneCenterX: 372 };
+const K = 278 / HAND.screenW; // tela com 278px de largura, como as mini telas foram desenhadas
+const px = (n: number) => `${(n * K).toFixed(2)}px`;
+
 function PhoneFrame({ children }: { children: ReactNode }) {
-  const side = "absolute w-[3px] bg-[oklch(0.32_0.01_160)]";
   return (
-    <div className="relative mx-auto w-full max-w-[18.5rem]">
-      <span className={`${side} -left-[2px] top-[5.5rem] h-7 rounded-l-sm`} aria-hidden="true" />
-      <span className={`${side} -left-[2px] top-[8rem] h-12 rounded-l-sm`} aria-hidden="true" />
-      <span className={`${side} -left-[2px] top-[11.75rem] h-12 rounded-l-sm`} aria-hidden="true" />
-      <span className={`${side} -right-[2px] top-[9rem] h-[4.5rem] rounded-r-sm`} aria-hidden="true" />
-      <div className="relative rounded-[3rem] bg-[oklch(0.18_0.01_165)] p-[9px] shadow-[0_30px_60px_-28px_rgb(0_0_0/0.55),inset_0_0_0_1.5px_oklch(0.42_0.01_160)]">
-        <div className="relative overflow-hidden rounded-[2.45rem] bg-background">
+    // A foto termina cortada no punho: o cartão em volta esconde o que passa da borda de baixo.
+    <div className="relative -mb-10 sm:-mb-12" style={{ height: px(HAND.h) }}>
+      <div className="absolute top-0" style={{ left: `calc(50% - ${px(HAND.phoneCenterX)})`, width: px(HAND.w), height: px(HAND.h) }}>
+        <div
+          className="absolute flex flex-col overflow-hidden bg-background [&>*:last-child]:grow"
+          style={{ left: px(HAND.screenX), top: px(HAND.screenY), width: px(HAND.screenW), height: px(HAND.screenH), borderRadius: px(HAND.radius) }}
+        >
           <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex h-11 items-center justify-between px-7 text-[12px] font-semibold text-white" aria-hidden="true">
             <span className="tabular-nums">9:41</span>
             <span className="flex items-center gap-1"><Signal className="h-3.5 w-3.5" /><Wifi className="h-3.5 w-3.5" /><BatteryFull className="h-4 w-4" /></span>
           </div>
-          <span className="absolute left-1/2 top-2.5 z-10 h-[26px] w-[84px] -translate-x-1/2 rounded-full bg-black" aria-hidden="true" />
+          <span className="absolute left-1/2 top-[11px] z-10 h-[23px] w-[80px] -translate-x-1/2 rounded-full bg-black" aria-hidden="true" />
           {children}
           <span className="absolute bottom-2 left-1/2 h-[5px] w-28 -translate-x-1/2 rounded-full bg-foreground/80" aria-hidden="true" />
         </div>
+        <img src="/landing/iphone-mao.webp" alt="" width={HAND.w} height={HAND.h} loading="lazy" decoding="async" draggable={false} className="pointer-events-none absolute inset-0 h-full w-full select-none drop-shadow-[0_24px_30px_rgb(0_0_0/0.18)]" />
       </div>
     </div>
   );
